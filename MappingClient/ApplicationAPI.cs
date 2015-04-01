@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Forms;
 using System.Data;
-using MappingRemotingInterfaces;
+using PADIMapNoReduce;
 using System.Runtime.Remoting.Channels.Tcp;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
@@ -29,8 +29,9 @@ namespace API {
         private Label lb_inputPath;
         
         private IMappingServer server;
-
+        private Client client;
         public FormChatClient() {
+            this.client = new Client();
             // Required for Windows Form Designer support
             InitializeComponent();
             // TODO: Add any constructor code after InitializeComponent call
@@ -195,6 +196,7 @@ namespace API {
             this.Controls.Add(this.tb_Conversation);
             this.Name = "FormChatClient";
             this.Text = "PADI MAP NO REDUCE APPLICATION";
+            this.Load += new System.EventHandler(this.FormChatClient_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -204,11 +206,16 @@ namespace API {
         /// The main entry point for the application.
         [STAThread]
         static void Main() {
+
             Application.Run(new FormChatClient());
         }
 
         private void submit_Click(object sender, System.EventArgs e) {
-            Stream myStream = null;
+            //Stream myStream = null;
+            this.client.setFile( this.tb_InputPath.Text);
+
+
+            /*
             of_Browse.FileName = this.tb_InputPath.Text;
             try {
                 if ((myStream = of_Browse.OpenFile()) != null) {
@@ -223,7 +230,7 @@ namespace API {
             }
             catch (Exception ex) {
                 MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
-            }
+            }*/
             
             //this.server.SubmitMapping(this.tb_numSplits.Text + " : " + this.tb_InputPath.Text);
         }  // BUTTON SUBMIT
@@ -262,6 +269,11 @@ namespace API {
                     MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
                 }
             }
+
+        }
+
+        private void FormChatClient_Load(object sender, EventArgs e)
+        {
 
         } // --------------------
     }

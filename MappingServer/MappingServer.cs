@@ -6,59 +6,51 @@ using System.Runtime.Remoting.Channels.Tcp;
 using System.Threading;
 using System.Collections.Generic;
 
-using MappingRemotingInterfaces;
+using PADIMapNoReduce;
 
-namespace Mapping{
-	// Summary description for Class1.
-	class Server
-	{
-		// The main entry point for the application.
-		[STAThread]
-		static void Main(string[] args) {
-			TcpChannel channel = new TcpChannel(8086);
-			ChannelServices.RegisterChannel(channel,false);
-			RemotingConfiguration.RegisterWellKnownServiceType(	typeof(MappingServerServices), "ChatServer", WellKnownObjectMode.Singleton);
-			System.Console.WriteLine("Press <enter> to terminate chat server...");
-			System.Console.ReadLine();
-		}
-	}
-	
-	class MappingServerServices : MarshalByRefObject, IMappingServer {
-        List<IMappingClient> clients;
-		List<string> messages;
+namespace Mapping
+{
 
-		MappingServerServices() {
-            clients = new List<IMappingClient>();
-            messages = new List<string>();
-		} // <construtor> incializa : lista com os clientes do chat + lista com as mensagens para serem transmitidas (pedidos)
+    class Worker
+    {
 
-        public List<string> RegisterClient(string NewClientName) {
-			Console.WriteLine("New client listening at " + ".tcp://localhost:" + NewClientName + "/ChatClient");
-			IMappingClient newClient = (IMappingClient) Activator.GetObject(typeof(IMappingClient), "tcp://localhost:" + NewClientName + "/ChatClient");
-			clients.Add(newClient);
-			return messages;
-		}
+        private static string endpoint = "tracker";
 
-		public void SubmitMapping(string mensagem){
-			messages.Add(mensagem);
-			ThreadStart ts = new ThreadStart(this.BroadcastMessage);
-			Thread t = new Thread(ts);
-			t.Start();
-		}
+        [STAThread]
+        static void Main(string[] args)
+        {
+            TcpChannel channel = new TcpChannel(8086);
+            ChannelServices.RegisterChannel(channel, false);
+            RemotingConfiguration.RegisterWellKnownServiceType(typeof(JobTracker), "tracker", WellKnownObjectMode.Singleton);
 
-		private void BroadcastMessage() {
-            string MsgToBcast;
-            lock (this) {
-                MsgToBcast = messages[messages.Count - 1];
+            System.Console.WriteLine("Press <enter> to terminate chat server...");
+            System.Console.ReadLine();
+        }
+    }
+
+
+    class JobTracker : MarshalByRefObject, IJobTracker
+    {
+
+        List<IWorker> slaves = new List<IWorker>();
+
+        public void submitJob(IMap map, string filename, int numSplits, string outputFile)
+        {
+            int splitId = 1;
+            int numLines = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:8086/client")).numberOfFileLines();
+            int step = numLines / numSplits;
+            int index = 0;
+
+            foreach (IWorker slave in slaves)
+            {
+                slave.startSplit(map, filename, index, index + step, splitId++);
+                index += step;
             }
-			for (int i = 0; i < clients.Count ; i++) {
-				try {
-                    ((IMappingClient)clients[i]).MsgToClient(MsgToBcast);}
-				catch (Exception e) {
-                    Console.WriteLine("Failed sending message to client. Removing client. " + e.Message);
-					clients.RemoveAt(i);
-				}
-			}
-		}
-	}
+        }
+
+        public bool hazWorkz()
+        {
+            return false;
+        }
+    }
 }

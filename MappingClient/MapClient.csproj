@@ -101,6 +101,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Client.cs" />
     <Content Include="App.ico" />
     <Compile Include="ApplicationAPI.cs">
       <SubType>Form</SubType>
