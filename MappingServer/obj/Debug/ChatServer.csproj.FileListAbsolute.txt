@@ -1,0 +1,9 @@
+C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\chatServer\bin\Debug\chatServer.exe
+C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\chatServer\bin\Debug\chatServer.pdb
+C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\chatServer\bin\Debug\ChatServices.dll
+C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\chatServer\bin\Debug\ChatServices.pdb
+C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\chatServer\obj\Debug\chatServer.exe
+C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\chatServer\obj\Debug\chatServer.pdb
+C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\chatServer\obj\Debug\ChatServer.csprojResolveAssemblyReference.cache
+C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Projecto\chatServer\obj\Debug\chatServer.exe
+C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Projecto\chatServer\obj\Debug\chatServer.pdb
