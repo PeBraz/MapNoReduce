@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
@@ -28,29 +29,71 @@ namespace Mapping
         }
     }
 
+    class WorkRemote : MarshalByRefObject, IWorker
+    {
+        private IClient client;
+
+        private IList<KeyValuePair<String,String>> map;
+
+
+        public WorkRemote()
+        {
+            client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:8086/client"));
+        }
+
+        public void startSplit(IMap map, string filename, int lower, int higher, int splitId)
+        {
+            List<IList<KeyValuePair<String, String>>> megaList = new List<IList<KeyValuePair<String, String>>>();
+            String[] splits = client.getSplit(lower, higher);
+            do
+            {
+                foreach(String s in splits)
+                {
+                    megaList.Add(map.Map(s));
+                }
+
+                ((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz();
+
+            } while (((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz() != null);
+        }
+    }
+
 
     class JobTracker : MarshalByRefObject, IJobTracker
     {
+        private const Queue queue = new Queue();
+        private const List<IWorker> slaves = new List<IWorker>();
 
-        List<IWorker> slaves = new List<IWorker>();
-
-        public void submitJob(IMap map, string filename, int numSplits, string outputFile)
+        public void submitJob(IMap map, string filename, int numSplits, int numberOfLines)
         {
-            int splitId = 1;
-            int numLines = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:8086/client")).numberOfFileLines();
-            int step = numLines / numSplits;
-            int index = 0;
+ 
+            int step = numberOfLines / numSplits;
+
+            for (int i = 0, index = 0; i < numSplits; i++, index+=step)
+            {
+                WorkStruct ws = new WorkStruct();
+                ws.id = i;
+                ws.lower = index;
+                ws.higher = index + step;
+                queue.Enqueue(ws);
+            }
 
             foreach (IWorker slave in slaves)
             {
-                slave.startSplit(map, filename, index, index + step, splitId++);
-                index += step;
+               slave.startSplit(map, filename, (WorkStruct)queue.Dequeue());
+            }
+
+            while(queue.Count != 0)
+            {
+                Thread.Sleep(1000);
             }
         }
 
-        public bool hazWorkz()
+        public WorkStruct hazWorkz()
         {
-            return false;
+            return queue.Count == 0 ? new WorkStruct(0,0,-1) : (WorkStruct)queue.Dequeue();
         }
+
     }
+
 }

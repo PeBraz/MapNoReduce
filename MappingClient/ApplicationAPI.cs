@@ -203,37 +203,16 @@ namespace API {
         }
         #endregion
 
-        /// The main entry point for the application.
         [STAThread]
         static void Main() {
-
+ 
             Application.Run(new FormChatClient());
         }
 
         private void submit_Click(object sender, System.EventArgs e) {
             //Stream myStream = null;
             this.client.setFile( this.tb_InputPath.Text);
-
-
-            /*
-            of_Browse.FileName = this.tb_InputPath.Text;
-            try {
-                if ((myStream = of_Browse.OpenFile()) != null) {
-                    using (myStream) {
-                        long i = myStream.Length;
-                        //MessageBox.Show("" + i);
-                        StreamReader reader = new StreamReader(myStream);
-                        String fileText = reader.ReadToEnd();
-                        this.server.SubmitMapping(of_Browse.FileName + ":\r\n" + fileText);
-                    } 
-                }
-            }
-            catch (Exception ex) {
-                MessageBox.Show("Error: Could not read file from disk. Original error: " + ex.Message);
-            }*/
-            
-            //this.server.SubmitMapping(this.tb_numSplits.Text + " : " + this.tb_InputPath.Text);
-        }  // BUTTON SUBMIT
+        }  
 
         public void AddMsg(string s) { this.tb_Conversation.AppendText("\r\n" + s); } // Adiciona uma
         

@@ -34,3 +34,12 @@ H:\Documents\MapNoReduce\MappingClient\bin\Debug\chatClient.exe
 H:\Documents\MapNoReduce\MappingClient\bin\Debug\chatClient.pdb
 H:\Documents\MapNoReduce\MappingClient\bin\Debug\ChatServices.dll
 H:\Documents\MapNoReduce\MappingClient\bin\Debug\ChatServices.pdb
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingClient\obj\Debug\chatClient.exe
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingClient\obj\Debug\chatClient.pdb
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingClient\bin\Debug\chatClient.exe
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingClient\bin\Debug\chatClient.pdb
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingClient\bin\Debug\ChatServices.dll
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingClient\bin\Debug\ChatServices.pdb
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingClient\obj\Debug\MapClient.csprojResolveAssemblyReference.cache
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingClient\obj\Debug\API.FormChatClient.resources
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingClient\obj\Debug\MapClient.csproj.GenerateResource.Cache

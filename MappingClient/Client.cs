@@ -28,9 +28,9 @@ namespace API
         {
             ClientRemote.setFile(filename);
         }
-        public void submitJob(IMap map, string filename, int numSplits, string outputFile) 
+        public void submitJob(IMap map, string filename, int numSplits, int numberOfLines) 
         { 
-            this.tracker.submitJob( map, filename, numSplits, outputFile);
+            this.tracker.submitJob( map, filename, numSplits, numberOfLines);
         }
     }
 
@@ -44,13 +44,13 @@ namespace API
             ClientRemote.lines = File.ReadAllLines(filename);
         }
 
-        public  String[] getSplit(int lower, int higher)
+        public String[] getSplit(int lower, int higher)
         {
-            if (lines != null) return null;
+            if (lines == null) return null;
          
             String[] splitFile = new String[higher - lower];
 
-            for (int i=lower, index = 0; i < higher || i < lines.Length; i++ , index++)
+            for (int i=lower, index = 0; i < higher && i < lines.Length; i++ , index++)
             {
                 splitFile[index] = ClientRemote.lines[i];
             }

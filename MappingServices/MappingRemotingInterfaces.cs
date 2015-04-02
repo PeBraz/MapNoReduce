@@ -15,24 +15,37 @@ namespace PADIMapNoReduce
 	}
 
     public interface IMap {
-        //Returns a set of key-value pairs for each input key-value pair
-        IList<KeyValuePair<String, String>> Map(String filename);
+        IList<KeyValuePair<String, String>> Map(String fileLine);
     }
 
     public interface IClient 
     {
-        int numberOfFileLines();
         string[] getSplit(int lower, int higher);
     }
     public interface IJobTracker
     { 
-        void submitJob(IMap map, string filename, int numSplits, string outputFile);
+        void submitJob(IMap map, string filename, int numSplits, int numberOfLines);
         bool hazWorkz();
     }
     public interface IWorker 
     { 
-       void startSplit(IMap map, string filename, int lower, int higher, int splitId);
+       void startSplit(IMap map, string filename, WorkStruct ws);
     }
+    [Serializable]
+    public struct WorkStruct
+    {
+        public int lower;
+        public int higher;
+        public int id;
 
+        public WorkStruct(int lower, int higher, int id)
+        {
+            this.lower = lower;
+            this.id = id;
+            this.higher = higher;
+        }
+            
 
+    }
+ 
 }
