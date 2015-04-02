@@ -21,7 +21,6 @@ namespace API
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(ClientRemote), "client", WellKnownObjectMode.Singleton);
 
             this.tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker");
-
         }
           
         public void setFile(string filename)
@@ -58,6 +57,22 @@ namespace API
         }    
         public int numberOfFileLines() {
             return (lines != null) ? lines.Length : 0;
+        }
+
+        public void storeSplit(ISet<KeyValuePair<String, String>> set, int splitID)
+        {
+
+            String folderPath = "MapOutputs"; 
+
+            if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
+
+            using (StreamWriter file = new StreamWriter(folderPath + splitID.ToString() + ".out"))
+            {
+                foreach (KeyValuePair<String, String> line in set)
+                {
+                    file.WriteLine(line.Key + "|" + line.Value);
+                }
+            }
         }
     }
 }

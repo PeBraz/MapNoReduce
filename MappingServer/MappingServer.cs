@@ -24,7 +24,7 @@ namespace Mapping
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(JobTracker), "tracker", WellKnownObjectMode.Singleton);
 
-            System.Console.WriteLine("Press <enter> to terminate chat server...");
+            System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
         }
     }
@@ -43,18 +43,21 @@ namespace Mapping
 
         public void startSplit(IMap map, string filename, int lower, int higher, int splitId)
         {
-            List<IList<KeyValuePair<String, String>>> megaList = new List<IList<KeyValuePair<String, String>>>();
+            ISet<KeyValuePair<String, String>> megaList = new HashSet<KeyValuePair<String, String>>();
             String[] splits = client.getSplit(lower, higher);
             do
             {
                 foreach(String s in splits)
                 {
-                    megaList.Add(map.Map(s));
+                    megaList.UnionWith(map.Map(s));
                 }
 
-                ((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz();
+                WorkStruct ws = ((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz();
+                lower = ws.lower;
+                higher = ws.higher;
+                splitId = ws.id;
 
-            } while (((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz() != null);
+            } while("teste" != null);
         }
     }
 
@@ -89,9 +92,14 @@ namespace Mapping
             }
         }
 
+
         public WorkStruct hazWorkz()
         {
-            return queue.Count == 0 ? new WorkStruct(0,0,-1) : (WorkStruct)queue.Dequeue();
+            lock (this)
+            {
+                return queue.Count == 0 ? new WorkStruct(0, 0, -1) : (WorkStruct)queue.Dequeue();
+            }
+
         }
 
     }

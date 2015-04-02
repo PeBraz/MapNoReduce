@@ -5,27 +5,19 @@ using System.Collections.Generic;
 namespace PADIMapNoReduce
 {
 
-	public interface IMappingServer {
-        List<string> RegisterClient(string NewClientPort);
-		void SubmitMapping(string message);
-	}
-
-	public interface IMappingClient {
-		void MsgToClient(string message);
-	}
-
     public interface IMap {
-        IList<KeyValuePair<String, String>> Map(String fileLine);
+        ISet<KeyValuePair<String, String>> Map(String fileLine);
     }
 
     public interface IClient 
     {
         string[] getSplit(int lower, int higher);
+        void storeSplit(ISet<KeyValuePair<String, String>> set, int id);
     }
     public interface IJobTracker
     { 
         void submitJob(IMap map, string filename, int numSplits, int numberOfLines);
-        bool hazWorkz();
+        WorkStruct hazWorkz();
     }
     public interface IWorker 
     { 
