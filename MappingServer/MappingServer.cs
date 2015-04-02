@@ -23,6 +23,7 @@ namespace Mapping
             TcpChannel channel = new TcpChannel(8086);
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(JobTracker), "tracker", WellKnownObjectMode.Singleton);
+            RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "worker", WellKnownObjectMode.Singleton);
 
             System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
@@ -32,7 +33,6 @@ namespace Mapping
     class WorkRemote : MarshalByRefObject, IWorker
     {
         private IClient client;
-
         private IList<KeyValuePair<String,String>> map;
 
 
@@ -41,23 +41,27 @@ namespace Mapping
             client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:8086/client"));
         }
 
-        public void startSplit(IMap map, string filename, int lower, int higher, int splitId)
+        public void keepWorkingThread( IMap map, string filename, WorkStruct job)
         {
             ISet<KeyValuePair<String, String>> megaList = new HashSet<KeyValuePair<String, String>>();
-            String[] splits = client.getSplit(lower, higher);
+            String[] splits;
             do
             {
-                foreach(String s in splits)
+                megaList.Clear();
+                splits = client.getSplit(job.lower, job.higher);
+                foreach (String s in splits)
                 {
                     megaList.UnionWith(map.Map(s));
                 }
+                client.storeSplit(megaList,job.id);
+                job = ((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz();
+                
+            } while (job.id != -1);
+        }
 
-                WorkStruct ws = ((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz();
-                lower = ws.lower;
-                higher = ws.higher;
-                splitId = ws.id;
-
-            } while("teste" != null);
+        public void startSplit(IMap map, string filename, WorkStruct job)
+        {
+             new Thread(() => keepWorkingThread(map, filename, job)).Start();
         }
     }
 
@@ -67,8 +71,11 @@ namespace Mapping
         private const Queue queue = new Queue();
         private const List<IWorker> slaves = new List<IWorker>();
 
+
         public void submitJob(IMap map, string filename, int numSplits, int numberOfLines)
         {
+
+            slaves.Add(((IWorker)Activator.GetObject(typeof(IWorker), "tcp://localhost:8086/tracker")));
  
             int step = numberOfLines / numSplits;
 

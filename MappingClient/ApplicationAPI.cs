@@ -205,8 +205,8 @@ namespace API {
 
         [STAThread]
         static void Main() {
- 
-            Application.Run(new FormChatClient());
+            new Client();
+            //Application.Run(new FormChatClient());
         }
 
         private void submit_Click(object sender, System.EventArgs e) {
