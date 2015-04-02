@@ -96,7 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="App.ico" />
-    <Compile Include="MappingServer.cs">
+    <Compile Include="Server.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

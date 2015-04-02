@@ -23,8 +23,7 @@
     <RemoteDebugMachine>
     </RemoteDebugMachine>
     <StartAction>Project</StartAction>
-    <StartArguments>
-    </StartArguments>
+    <StartArguments>Mapper ..\..\..\Mapper\bin\Debug\Mapper.dll</StartArguments>
     <StartPage>
     </StartPage>
     <StartProgram>

@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
 using System.Runtime.Remoting.Channels.Tcp;
+using System.Net.Sockets;
 using PADIMapNoReduce;
 
 namespace API
@@ -13,14 +14,31 @@ namespace API
     class Client 
     {
         private IJobTracker tracker;
+        private String mapName;
+        private String codeN;
 
-        public Client() 
+        public Client(String mapname, String code) 
         {
+            this.mapName = mapname;
+            this.codeN = code;
+
             TcpChannel channel = new TcpChannel(8086);
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(ClientRemote), "client", WellKnownObjectMode.Singleton);
 
             this.tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker");
+
+            try
+            {
+                this.tracker.SendMapper(File.ReadAllBytes(codeN), mapName);
+            }
+            catch (SocketException)
+            {
+                System.Console.WriteLine("Could not locate server");
+            }
+            Console.ReadLine();
+
+           
         }
           
         public void setFile(string filename)

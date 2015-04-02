@@ -6,7 +6,7 @@ namespace PADIMapNoReduce
 {
 
     public interface IMap {
-        ISet<KeyValuePair<String, String>> Map(String fileLine);
+        ISet<KeyValuePair<String, String>> map(String fileLine);
     }
 
     public interface IClient 
@@ -18,10 +18,12 @@ namespace PADIMapNoReduce
     { 
         void submitJob(IMap map, string filename, int numSplits, int numberOfLines);
         WorkStruct hazWorkz();
+        void SendMapper(byte[] code, String className);
     }
     public interface IWorker 
     { 
        void startSplit(IMap map, string filename, WorkStruct ws);
+       void SendMapper(byte[] code, String className);
     }
     [Serializable]
     public struct WorkStruct

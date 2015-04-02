@@ -1,0 +1,8 @@
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\Mapper\obj\Debug\Mapper.csprojResolveAssemblyReference.cache
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\Mapper\bin\Debug\Mapper.dll.config
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\Mapper\bin\Debug\Mapper.dll
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\Mapper\bin\Debug\Mapper.pdb
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\Mapper\bin\Debug\ChatServices.dll
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\Mapper\bin\Debug\ChatServices.pdb
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\Mapper\obj\Debug\Mapper.dll
+C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\Mapper\obj\Debug\Mapper.pdb

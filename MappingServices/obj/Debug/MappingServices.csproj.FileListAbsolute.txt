@@ -10,6 +10,5 @@ H:\Documents\MapNoReduce\MappingServices\obj\Debug\ChatServices.dll
 H:\Documents\MapNoReduce\MappingServices\obj\Debug\ChatServices.pdb
 C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingServices\bin\Debug\ChatServices.dll
 C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingServices\bin\Debug\ChatServices.pdb
-C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingServices\obj\Debug\MappingServices.csprojResolveAssemblyReference.cache
 C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingServices\obj\Debug\ChatServices.dll
 C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingServices\obj\Debug\ChatServices.pdb

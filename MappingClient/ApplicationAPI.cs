@@ -28,10 +28,9 @@ namespace API {
         private System.Windows.Forms.Label lb_separate;
         private Label lb_inputPath;
         
-        private IMappingServer server;
         private Client client;
         public FormChatClient() {
-            this.client = new Client();
+            //this.client = new Client();
             // Required for Windows Form Designer support
             InitializeComponent();
             // TODO: Add any constructor code after InitializeComponent call
@@ -204,8 +203,11 @@ namespace API {
         #endregion
 
         [STAThread]
-        static void Main() {
-            new Client();
+        static void Main(string[] args)
+        {
+            String mapName = args[0];
+            String code = args[1];
+            new Client(mapName,code);
             //Application.Run(new FormChatClient());
         }
 
@@ -217,25 +219,8 @@ namespace API {
         public void AddMsg(string s) { this.tb_Conversation.AppendText("\r\n" + s); } // Adiciona uma
         
         private void button2_Click(object sender, System.EventArgs e) { 
-            MappingClientServices.form = this;
-            int port = Int32.Parse(tb_Port.Text);
-            TcpChannel chan = new TcpChannel(port);
-            ChannelServices.RegisterChannel(chan, false);
 
-            // Alternative 1 for service activation
-            MappingClientServices servicos = new MappingClientServices();
-            RemotingServices.Marshal(servicos, "ChatClient", typeof(MappingClientServices));
-
-            // Alternative 2 for service activation
-            //RemotingConfiguration.RegisterWellKnownServiceType(typeof(ChatClientServices), "ChatClient",WellKnownObjectMode.Singleton);
-
-            IMappingServer server = (IMappingServer)Activator.GetObject(typeof(IMappingServer), "tcp://localhost:8086/ChatServer");
-            List<string> messages = server.RegisterClient(port.ToString());
-            this.server = server;
-            foreach (object o in messages) {
-                AddMsg((string)o);
-            }
-        }// CONNECT
+        }
 
         private void openFileDialog(object sender, System.EventArgs e) {
             if (of_Browse.ShowDialog() == DialogResult.OK) { 
@@ -257,16 +242,5 @@ namespace API {
         } // --------------------
     }
 
-    delegate void DelAddMsg(string mensagem);
-
-    public class MappingClientServices : MarshalByRefObject, IMappingClient {
-        public static FormChatClient form;
-
-        public MappingClientServices() {}
-
-        public void MsgToClient(string mensagem) {
-            // thread-safe access to form
-            form.Invoke(new DelAddMsg(form.AddMsg), mensagem);
-        }
-    }
+  
 }
