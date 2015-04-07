@@ -31,8 +31,9 @@ namespace API
 
             try
             {
-                this.tracker.SendMapper(File.ReadAllBytes(codeN), mapName);
-                this.tracker.submitJob(null,@"C:\Users\ruijosepereira\Desktop\ola.txt",2,5);
+                this.tracker.SendMapper(File.ReadAllBytes(codeN), "Map");
+                ClientRemote.setFile(@"H:\Documents\MapNoReduce\ola.txt");
+                this.tracker.submitJob(null, @"H:\Documents\MapNoReduce\ola.txt", 1, 5);
             }
             catch (SocketException)
             {

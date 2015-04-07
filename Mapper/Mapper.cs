@@ -13,7 +13,6 @@ namespace Mapper
         {
             ISet<KeyValuePair<string, string>> result = new HashSet<KeyValuePair<string, string>>();
             result.Add(new KeyValuePair<string, string>("testKey1", fileLine));
-            result.Add(new KeyValuePair<string, string>("testKey2", "anotherValue"));
             return result;
         }
     }

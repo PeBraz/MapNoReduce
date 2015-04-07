@@ -26,3 +26,10 @@ C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingServer\bin\Debug\chatSer
 C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingServer\bin\Debug\chatServer.pdb
 C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingServer\bin\Debug\ChatServices.dll
 C:\Users\ruijosepereira\Desktop\PADI\MapNoReduce\MappingServer\bin\Debug\ChatServices.pdb
+H:\Documents\MapNoReduce\MappingServer\bin\Debug\chatServer.exe
+H:\Documents\MapNoReduce\MappingServer\bin\Debug\chatServer.pdb
+H:\Documents\MapNoReduce\MappingServer\bin\Debug\ChatServices.dll
+H:\Documents\MapNoReduce\MappingServer\bin\Debug\ChatServices.pdb
+H:\Documents\MapNoReduce\MappingServer\obj\Debug\MappingServer.csprojResolveAssemblyReference.cache
+H:\Documents\MapNoReduce\MappingServer\obj\Debug\chatServer.exe
+H:\Documents\MapNoReduce\MappingServer\obj\Debug\chatServer.pdb

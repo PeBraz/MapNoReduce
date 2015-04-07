@@ -43,7 +43,7 @@ namespace PADIMapNoReduce
         public ISet<KeyValuePair<String, String>> map(string fileLine) {
             object[] args = new object[] { fileLine };
             return (ISet<KeyValuePair<String, String>>)
-                    this.type.InvokeMember("Map", BindingFlags.Default | BindingFlags.InvokeMethod, null, this.classObj, args);
+                    this.type.InvokeMember("map", BindingFlags.Default | BindingFlags.InvokeMethod, null, this.classObj, args);
         }
     }
 
@@ -66,9 +66,14 @@ namespace PADIMapNoReduce
             {
                 megaList.Clear();
                 splits = client.getSplit(job.lower, job.higher);
+                if (splits == null)
+                {
+                    Console.WriteLine("PROB: EXITING");
+                    return;
+                }
                 foreach (String s in splits)
                 {
-                    megaList.UnionWith(map.map(s));
+                    megaList.UnionWith(mapObj.map(s));
                 }
                 client.storeSplit(megaList,job.id);
                 job = ((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz();
@@ -79,7 +84,6 @@ namespace PADIMapNoReduce
         public void startSplit(IMap map, string filename, WorkStruct job)
         {
              new Thread(() => keepWorkingThread(map, filename, job)).Start();
-             Console.WriteLine("OLAAAAAA");
         }
 
         public void SendMapper(byte[] code, string className)
@@ -132,7 +136,7 @@ namespace PADIMapNoReduce
 
             while(queue.Count != 0)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(10000);
             }
         }
 
