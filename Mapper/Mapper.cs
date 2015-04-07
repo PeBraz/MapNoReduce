@@ -12,7 +12,7 @@ namespace Mapper
         public ISet<KeyValuePair<string, string>> map(string fileLine)
         {
             ISet<KeyValuePair<string, string>> result = new HashSet<KeyValuePair<string, string>>();
-            result.Add(new KeyValuePair<string, string>("testKey1", fileLine));
+            result.Add(new KeyValuePair<string, string>("Key", fileLine));
             return result;
         }
     }

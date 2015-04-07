@@ -19,6 +19,7 @@ namespace PADIMapNoReduce
         void submitJob(IMap map, string filename, int numSplits, int numberOfLines);
         WorkStruct hazWorkz();
         void SendMapper(byte[] code, String className);
+        void join();    
     }
     public interface IWorker 
     { 

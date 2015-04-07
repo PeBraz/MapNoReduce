@@ -17,10 +17,13 @@ namespace API
         private String mapName;
         private String codeN;
 
+        private string inputFilePath = @"..\..\..\ola.txt"; 
+
         public Client(String mapname, String code) 
         {
             this.mapName = mapname;
             this.codeN = code;
+            
 
             TcpChannel channel = new TcpChannel(8087);
             ChannelServices.RegisterChannel(channel, false);
@@ -32,8 +35,8 @@ namespace API
             try
             {
                 this.tracker.SendMapper(File.ReadAllBytes(codeN), "Map");
-                ClientRemote.setFile(@"H:\Documents\MapNoReduce\ola.txt");
-                this.tracker.submitJob(null, @"H:\Documents\MapNoReduce\ola.txt", 1, 5);
+                int numLines = ClientRemote.setFile(this.inputFilePath);
+                this.tracker.submitJob(null, this.inputFilePath, 5, numLines);
             }
             catch (SocketException)
             {
@@ -58,16 +61,18 @@ namespace API
 
        private static String[] lines = null;
 
-        public static void setFile(string filename) 
+        public static int setFile(string filename) 
         {
             ClientRemote.lines = File.ReadAllLines(filename);
+            return ClientRemote.lines.Length;
         }
 
         public String[] getSplit(int lower, int higher)
         {
             if (lines == null) return null;
          
-            String[] splitFile = new String[higher - lower];
+            int arraySize = higher > lines.Length? lines.Length - lower : higher - lower;
+            String[] splitFile = new String[arraySize];
 
             for (int i=lower, index = 0; i < higher && i < lines.Length; i++ , index++)
             {
@@ -82,7 +87,7 @@ namespace API
         public void storeSplit(ISet<KeyValuePair<String, String>> set, int splitID)
         {
 
-            String folderPath = "MapOutputs"; 
+            String folderPath = @"MapOutputs\"; 
 
             if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
 

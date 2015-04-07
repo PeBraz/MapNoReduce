@@ -1,5 +1,0 @@
-C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\ChatServices\bin\Debug\ChatServices.dll
-C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\ChatServices\bin\Debug\ChatServices.pdb
-C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\ChatServices\obj\Debug\ChatServices.csprojResolveAssemblyReference.cache
-C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\ChatServices\obj\Debug\ChatServices.dll
-C:\Users\samsung\Documents\IST\4 ano IST\4ano_2semestre\PADI\Laboratórios\Lab 3\PADIChat\ChatServices\obj\Debug\ChatServices.pdb

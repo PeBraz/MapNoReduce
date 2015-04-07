@@ -1,3 +1,15 @@
-O mangas diz cenas
-O mangas faz cenas
-O karan disse algo
+// lo is the index of the leftmost element of the subarray
+  // hi is the index of the rightmost element of the subarray (inclusive)
+  partition(A, lo, hi)
+     pivotIndex := choosePivot(A, lo, hi)
+     pivotValue := A[pivotIndex]
+     // put the chosen pivot at A[hi]
+     swap A[pivotIndex] and A[hi]
+     storeIndex := lo
+     // Compare remaining array elements against pivotValue = A[hi]
+     for i from lo to hi-1, inclusive
+         if A[i] < pivotValue
+             swap A[i] and A[storeIndex]
+             storeIndex := storeIndex + 1
+     swap A[storeIndex] and A[hi]  // Move pivot to its final place
+     return storeIndex

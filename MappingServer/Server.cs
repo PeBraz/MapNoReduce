@@ -62,23 +62,24 @@ namespace PADIMapNoReduce
         {
             ISet<KeyValuePair<String, String>> megaList = new HashSet<KeyValuePair<String, String>>();
             String[] splits;
+            IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker");
+
             do
             {
                 megaList.Clear();
                 splits = client.getSplit(job.lower, job.higher);
-                if (splits == null)
-                {
-                    Console.WriteLine("PROB: EXITING");
-                    return;
-                }
+                if (splits == null) break;
+
                 foreach (String s in splits)
                 {
                     megaList.UnionWith(mapObj.map(s));
                 }
                 client.storeSplit(megaList,job.id);
-                job = ((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz();
-                
+                job = tracker.hazWorkz();
+            
+
             } while (job.id != -1);
+            tracker.join();
         }
 
         public void startSplit(IMap map, string filename, WorkStruct job)
@@ -110,6 +111,7 @@ namespace PADIMapNoReduce
             slaves.Add(((IWorker)Activator.GetObject(typeof(IWorker), "tcp://localhost:8086/worker")));
         }
 
+        private int done = 0;   //temporary used by join() to signal worker has no more work to do
         private Queue queue = new Queue();
         private List<IWorker> slaves = new List<IWorker>();
 
@@ -117,16 +119,18 @@ namespace PADIMapNoReduce
         public void submitJob(IMap map, string filename, int numSplits, int numberOfLines)
         {
 
-            
+            int numSlaves = this.slaves.Count;
             int step = numberOfLines / numSplits;
+            int remainder = numberOfLines % numSplits;
 
-            for (int i = 0, index = 0; i < numSplits; i++, index+=step)
+            for (int i = 0, index = 0; i < numSplits; i++, index+=step + ((remainder > 0)?1:0))
             {
                 WorkStruct ws = new WorkStruct();
                 ws.id = i;
                 ws.lower = index;
-                ws.higher = index + step;
+                ws.higher = index + step + ((remainder > 0)?1:0);
                 queue.Enqueue(ws);
+                remainder--;
             }
 
             foreach (IWorker slave in slaves)
@@ -134,9 +138,10 @@ namespace PADIMapNoReduce
                slave.startSplit(map, filename, (WorkStruct)queue.Dequeue());
             }
 
-            while(queue.Count != 0)
+            //while(queue.Count != 0)
+            while (done < numSlaves)
             {
-                Thread.Sleep(10000);
+                Thread.Sleep(1000);
             }
         }
 
@@ -144,6 +149,10 @@ namespace PADIMapNoReduce
         {
             foreach (IWorker slave in slaves)
                 slave.SendMapper(code,className);
+        }
+
+        public void join() {
+            this.done++;
         }
 
 
