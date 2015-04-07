@@ -4,6 +4,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MapClient", "MappingClient\MapClient.csproj", "{887CF4DA-987C-4ED4-9587-399252382F19}"
+	ProjectSection(ProjectDependencies) = postProject
+		{16F92033-E674-486B-B831-91E310CB2D60} = {16F92033-E674-486B-B831-91E310CB2D60}
+		{3B90B673-B071-4D09-AE26-5FC00801DE54} = {3B90B673-B071-4D09-AE26-5FC00801DE54}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MappingServer", "MappingServer\MappingServer.csproj", "{16F92033-E674-486B-B831-91E310CB2D60}"
 EndProject

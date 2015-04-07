@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using PADIMapNoReduce;
 
-namespace Mapping
+namespace PADIMapNoReduce
 {
 
     class Worker
@@ -32,7 +32,7 @@ namespace Mapping
 
     class Map
     {
-        public static delegate ISet<KeyValuePair<String, String>> mapDelegate(HashSet<KeyValuePair<String, String>> fun);
+        //public static delegate ISet<KeyValuePair<String, String>> mapDelegate(HashSet<KeyValuePair<String, String>> fun);
         private Type type;
         private object classObj;
         public Map(Type type) {
@@ -55,7 +55,7 @@ namespace Mapping
 
         public WorkRemote()
         {
-            client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:8086/client"));
+            client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:8087/client"));
         }
 
         public void keepWorkingThread( IMap map, string filename, WorkStruct job)
@@ -68,7 +68,7 @@ namespace Mapping
                 splits = client.getSplit(job.lower, job.higher);
                 foreach (String s in splits)
                 {
-                    megaList.UnionWith(map.Map(s));
+                    megaList.UnionWith(map.map(s));
                 }
                 client.storeSplit(megaList,job.id);
                 job = ((IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker")).hazWorkz();
@@ -79,6 +79,7 @@ namespace Mapping
         public void startSplit(IMap map, string filename, WorkStruct job)
         {
              new Thread(() => keepWorkingThread(map, filename, job)).Start();
+             Console.WriteLine("OLAAAAAA");
         }
 
         public void SendMapper(byte[] code, string className)
@@ -102,11 +103,11 @@ namespace Mapping
 
         public JobTracker()
         {
-            slaves.Add(((IWorker)Activator.GetObject(typeof(IWorker), "tcp://localhost:8086/tracker")));
+            slaves.Add(((IWorker)Activator.GetObject(typeof(IWorker), "tcp://localhost:8086/worker")));
         }
 
-        private const Queue queue = new Queue();
-        private const List<IWorker> slaves = new List<IWorker>();
+        private Queue queue = new Queue();
+        private List<IWorker> slaves = new List<IWorker>();
 
 
         public void submitJob(IMap map, string filename, int numSplits, int numberOfLines)

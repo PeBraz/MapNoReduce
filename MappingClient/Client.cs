@@ -22,23 +22,24 @@ namespace API
             this.mapName = mapname;
             this.codeN = code;
 
-            TcpChannel channel = new TcpChannel(8086);
+            TcpChannel channel = new TcpChannel(8087);
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(ClientRemote), "client", WellKnownObjectMode.Singleton);
 
+  
             this.tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker");
 
             try
             {
                 this.tracker.SendMapper(File.ReadAllBytes(codeN), mapName);
+                this.tracker.submitJob(null,@"C:\Users\ruijosepereira\Desktop\ola.txt",2,5);
             }
             catch (SocketException)
             {
                 System.Console.WriteLine("Could not locate server");
             }
+            Console.WriteLine("KARANNNNN");
             Console.ReadLine();
-
-           
         }
           
         public void setFile(string filename)
