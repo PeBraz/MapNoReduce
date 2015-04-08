@@ -12,10 +12,19 @@ using PADIMapNoReduce;
 namespace PADIMapNoReduce
 {
 
-    class Worker
+    public class Worker
     {
 
         private static string endpoint = "tracker";
+
+        public Worker(int port) {
+            TcpChannel channel = new TcpChannel(port);
+            ChannelServices.RegisterChannel(channel, false);
+            RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "W", WellKnownObjectMode.Singleton);
+
+            System.Console.WriteLine("Press <enter> to terminate...");
+            System.Console.ReadLine();
+        }
 
         [STAThread]
         static void Main(string[] args)
@@ -79,7 +88,7 @@ namespace PADIMapNoReduce
             
 
             } while (job.id != -1);
-            tracker.join();
+            tracker.join(); // when no more jobs at tracker
         }
 
         public void startSplit(IMap map, string filename, WorkStruct job)
@@ -138,11 +147,12 @@ namespace PADIMapNoReduce
                slave.startSplit(map, filename, (WorkStruct)queue.Dequeue());
             }
 
-            //while(queue.Count != 0)
+
             while (done < numSlaves)
             {
                 Thread.Sleep(1000);
             }
+            done = 0;
         }
 
         public void SendMapper(byte[] code, String className)

@@ -15,15 +15,14 @@ namespace API
     {
         private IJobTracker tracker;
         private String mapName;
-        private String codeN;
 
         private string inputFilePath = @"..\..\..\ola.txt"; 
 
-        public Client(String mapname, String code) 
+
+        public Client(String mapname, String codePath) 
         {
             this.mapName = mapname;
-            this.codeN = code;
-            
+   
 
             TcpChannel channel = new TcpChannel(8087);
             ChannelServices.RegisterChannel(channel, false);
@@ -34,7 +33,7 @@ namespace API
 
             try
             {
-                this.tracker.SendMapper(File.ReadAllBytes(codeN), "Map");
+                this.tracker.SendMapper(File.ReadAllBytes(codePath), "Map");
                 int numLines = ClientRemote.setFile(this.inputFilePath);
                 this.tracker.submitJob(null, this.inputFilePath, 5, numLines);
             }
