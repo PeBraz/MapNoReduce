@@ -25,7 +25,8 @@ namespace PADIMapNoReduce
     { 
        void startSplit(IMap map, string filename, WorkStruct ws);
        void SendMapper(byte[] code, String className);
-       void printStatus();
+       //void printStatus();
+       void addDelay(int seconds); 
     }
     [Serializable]
     public struct WorkStruct

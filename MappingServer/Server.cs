@@ -22,8 +22,7 @@ namespace PADIMapNoReduce
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "W", WellKnownObjectMode.Singleton);
 
-            System.Console.WriteLine("Press <enter> to terminate...");
-            System.Console.ReadLine();
+            System.Console.WriteLine(".......");
         }
 
         [STAThread]
@@ -61,6 +60,7 @@ namespace PADIMapNoReduce
         private IClient client;
         private IList<KeyValuePair<String,String>> map;
         private Map mapObj;
+        private int delay = 0;
 
         public WorkRemote()
         {
@@ -83,12 +83,38 @@ namespace PADIMapNoReduce
                 {
                     megaList.UnionWith(mapObj.map(s));
                 }
+
+                int del = getDelay();
+
+                if (del > 0)
+                {
+                    Thread.Sleep(del * 1000);
+                }
+
                 client.storeSplit(megaList,job.id);
                 job = tracker.hazWorkz();
             
 
             } while (job.id != -1);
             tracker.join(); // when no more jobs at tracker
+        }
+
+        public void addDelay(int seconds) //delay worker
+        {
+            lock(this)
+            {
+                this.delay += seconds;
+            }
+        }
+
+        private int getDelay()
+        {
+            lock(this)
+            {
+                int del = this.delay;
+                this.delay = 0;
+                return del;
+            }
         }
 
         public void startSplit(IMap map, string filename, WorkStruct job)
