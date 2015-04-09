@@ -19,13 +19,14 @@ namespace PADIMapNoReduce
         void submitJob(IMap map, string filename, int numSplits, int numberOfLines);
         WorkStruct hazWorkz();
         void SendMapper(byte[] code, String className);
-        void join();    
+        void join();
+        void connect(int id);
     }
     public interface IWorker 
     { 
        void startSplit(IMap map, string filename, WorkStruct ws);
-       void SendMapper(byte[] code, String className);
-       void printStatus();
+       void createMapper(byte[] code, String className);
+       string printStatus();
     }
     [Serializable]
     public struct WorkStruct

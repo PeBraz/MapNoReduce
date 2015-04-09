@@ -7,6 +7,7 @@ using System.Runtime.Remoting.Channels.Tcp;
 using System.Threading;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Net.Sockets;
 using PADIMapNoReduce;
 
 namespace PADIMapNoReduce
@@ -14,25 +15,58 @@ namespace PADIMapNoReduce
 
     public class Worker
     {
+        public static int PORT = 30000;
 
+        private static int id;
+        private int masterId = 1;
+        private int port;
         private static string endpoint = "tracker";
 
-        public Worker(int port) {
-            TcpChannel channel = new TcpChannel(port);
-            ChannelServices.RegisterChannel(channel, false);
-            RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "W", WellKnownObjectMode.Singleton);
+        public Worker(int id) {
 
-            System.Console.WriteLine("Press <enter> to terminate...");
-            System.Console.ReadLine();
+            setId(id);
+            this.port = Worker.PORT + getId();
+
+            this.start();
+        }
+        
+        private void start()
+        {
+            try
+            {
+                if (getId() == masterId)
+                {
+                    Console.WriteLine("I am Master at 30001");
+                    TcpChannel channel = new TcpChannel(Worker.PORT + getId());
+                    ChannelServices.RegisterChannel(channel, false);
+                    RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "W", WellKnownObjectMode.Singleton);
+                }
+                else {
+                    string masterUrl = "tcp://localhost:" + (PORT + this.masterId).ToString() + "/W";
+                    ((IJobTracker)Activator.GetObject(typeof(IJobTracker), masterUrl)).connect(getId());
+                
+                
+                }
+            }
+            catch (SocketException)
+            {
+                Console.Write("Failed to start on url: tcp://localhost:" + port + "/W");
+                System.Environment.Exit(1);
+            }
+        }
+        public static int getId() 
+        {
+            return Worker.id;
+        }
+        public static void setId(int id) 
+        {
+            Worker.id = id;
         }
 
         [STAThread]
         static void Main(string[] args)
         {
-            TcpChannel channel = new TcpChannel(8086);
-            ChannelServices.RegisterChannel(channel, false);
-            RemotingConfiguration.RegisterWellKnownServiceType(typeof(JobTracker), "tracker", WellKnownObjectMode.Singleton);
-            RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "worker", WellKnownObjectMode.Singleton);
+            Worker w = new Worker(1);
 
             System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
@@ -56,22 +90,27 @@ namespace PADIMapNoReduce
         }
     }
 
-    class WorkRemote : MarshalByRefObject, IWorker
+    partial class WorkRemote : MarshalByRefObject, IWorker, IJobTracker
     {
         private IClient client;
-        private IList<KeyValuePair<String,String>> map;
+        private IList<KeyValuePair<String, String>> map;
         private Map mapObj;
+
+        private int id;
+
 
         public WorkRemote()
         {
-            client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:8087/client"));
+            this.id = Worker.getId();
+            client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:10001/C"));
+            slaves.Add(new KeyValuePair<int, IWorker>(id, this));   //add nyself
         }
 
-        public void keepWorkingThread( IMap map, string filename, WorkStruct job)
+        public void keepWorkingThread(IMap map, string filename, WorkStruct job)
         {
             ISet<KeyValuePair<String, String>> megaList = new HashSet<KeyValuePair<String, String>>();
             String[] splits;
-            IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker");
+            IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:30001/W");
 
             do
             {
@@ -83,20 +122,25 @@ namespace PADIMapNoReduce
                 {
                     megaList.UnionWith(mapObj.map(s));
                 }
-                client.storeSplit(megaList,job.id);
+                client.storeSplit(megaList, job.id);
                 job = tracker.hazWorkz();
-            
+
 
             } while (job.id != -1);
             tracker.join(); // when no more jobs at tracker
         }
 
-        public void startSplit(IMap map, string filename, WorkStruct job)
+        public string printStatus()
         {
-             new Thread(() => keepWorkingThread(map, filename, job)).Start();
+            return "alive";
         }
 
-        public void SendMapper(byte[] code, string className)
+        public void startSplit(IMap map, string filename, WorkStruct job)
+        {
+            new Thread(() => keepWorkingThread(map, filename, job)).Start();
+        }
+
+        public void createMapper(byte[] code, string className)
         {
             Assembly assembly = Assembly.Load(code);
             foreach (Type type in assembly.GetTypes())
@@ -110,68 +154,7 @@ namespace PADIMapNoReduce
                 }
             }
         }
+
     }
 
-    class JobTracker : MarshalByRefObject, IJobTracker
-    {
-
-        public JobTracker()
-        {
-            slaves.Add(((IWorker)Activator.GetObject(typeof(IWorker), "tcp://localhost:8086/worker")));
-        }
-
-        private int done = 0;   //temporary used by join() to signal worker has no more work to do
-        private Queue queue = new Queue();
-        private List<IWorker> slaves = new List<IWorker>();
-
-
-        public void submitJob(IMap map, string filename, int numSplits, int numberOfLines)
-        {
-
-            int numSlaves = this.slaves.Count;
-            int step = numberOfLines / numSplits;
-            int remainder = numberOfLines % numSplits;
-
-            for (int i = 0, index = 0; i < numSplits; i++, index+=step + ((remainder > 0)?1:0))
-            {
-                WorkStruct ws = new WorkStruct();
-                ws.id = i;
-                ws.lower = index;
-                ws.higher = index + step + ((remainder > 0)?1:0);
-                queue.Enqueue(ws);
-                remainder--;
-            }
-
-            foreach (IWorker slave in slaves)
-            {
-               slave.startSplit(map, filename, (WorkStruct)queue.Dequeue());
-            }
-
-
-            while (done < numSlaves)
-            {
-                Thread.Sleep(1000);
-            }
-            done = 0;
-        }
-
-        public void SendMapper(byte[] code, String className)
-        {
-            foreach (IWorker slave in slaves)
-                slave.SendMapper(code,className);
-        }
-
-        public void join() {
-            this.done++;
-        }
-
-
-        public WorkStruct hazWorkz()
-        {
-            lock (this)
-            {
-                return queue.Count == 0 ? new WorkStruct(0, 0, -1) : (WorkStruct)queue.Dequeue();
-            }
-        }
-    }
 }

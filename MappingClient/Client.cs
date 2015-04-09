@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.IO;
 using System.Runtime.Remoting;
 using System.Runtime.Remoting.Channels;
@@ -19,40 +20,46 @@ namespace API
         private string inputFilePath = @"..\..\..\ola.txt"; 
 
 
-        public Client(String mapname, String codePath) 
+        public Client(String mapname, String codePath, int id) 
         {
             this.mapName = mapname;
    
 
-            TcpChannel channel = new TcpChannel(8087);
+            TcpChannel channel = new TcpChannel(10000 + id);
             ChannelServices.RegisterChannel(channel, false);
-            RemotingConfiguration.RegisterWellKnownServiceType(typeof(ClientRemote), "client", WellKnownObjectMode.Singleton);
+            RemotingConfiguration.RegisterWellKnownServiceType(typeof(ClientRemote), "C", WellKnownObjectMode.Singleton);
 
   
-            this.tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:8086/tracker");
+            this.tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:30001/W");
 
-            try
-            {
-                this.tracker.SendMapper(File.ReadAllBytes(codePath), "Map");
-                int numLines = ClientRemote.setFile(this.inputFilePath);
-                this.tracker.submitJob(null, this.inputFilePath, 5, numLines);
-            }
-            catch (SocketException)
-            {
-                System.Console.WriteLine("Could not locate server");
-            }
-            Console.WriteLine("KARANNNNN");
+            this.newJob(codePath, inputFilePath, 3);
+         
+            Console.WriteLine("<Success>");
             Console.ReadLine();
         }
-          
-        public void setFile(string filename)
+
+
+
+        public void newJob(string codePath, string inputFilePath, int numOfSplits) 
         {
-            ClientRemote.setFile(filename);
+            while (true)
+            {
+                try
+                {
+                    this.tracker.SendMapper(File.ReadAllBytes(codePath), "Map");
+                    int numLines = ClientRemote.setFile(this.inputFilePath);
+                    this.tracker.submitJob(null, inputFilePath, numOfSplits, numLines);
+                    break;
+                }
+                catch (SocketException)
+                {
+                    System.Console.WriteLine("Could not locate server. Retrying...");
+                    Thread.Sleep(1000);
+                }
+            }
         }
-        public void submitJob(IMap map, string filename, int numSplits, int numberOfLines) 
-        { 
-            this.tracker.submitJob( map, filename, numSplits, numberOfLines);
-        }
+
+
     }
 
     class ClientRemote : MarshalByRefObject, IClient
@@ -63,7 +70,7 @@ namespace API
         public static int setFile(string filename) 
         {
             ClientRemote.lines = File.ReadAllLines(filename);
-            return ClientRemote.lines.Length;
+            return ClientRemote.numberOfFileLines();
         }
 
         public String[] getSplit(int lower, int higher)
@@ -79,7 +86,7 @@ namespace API
             }
             return splitFile;
         }    
-        public int numberOfFileLines() {
+        private static int numberOfFileLines() {
             return (lines != null) ? lines.Length : 0;
         }
 
