@@ -14,7 +14,7 @@ namespace PADIMapNoReduce
 
 
 
-        public void submitJob(IMap map, string filename, int numSplits, int numberOfLines)
+        public void submitJob(string map, string filename, int numSplits, int numberOfLines)
         {
             Console.WriteLine("Request for file: " + filename);
 
@@ -38,11 +38,11 @@ namespace PADIMapNoReduce
                 slave.Value.startSplit(map, filename, (WorkStruct)queue.Dequeue());
             }
 
-
             while (done < numSlaves)
             {
-                Thread.Sleep(1000);
+               Thread.Sleep(10000);
             }
+
             done = 0;
         }
         /**
@@ -54,13 +54,12 @@ namespace PADIMapNoReduce
                 slave.Value.createMapper(code, className);
         }
 
-        public void connect(int id) 
+        public void connect(int id, string url) 
         { 
             if (!this.amMaster()) return;
 
-            int workerId = Worker.PORT + id;
-            IWorker worker =  (IWorker)Activator.GetObject(typeof(IWorker),  "tcp://localhost:" + workerId.ToString() + "/W");
-            slaves.Add(new KeyValuePair<int, IWorker>(workerId, worker));
+            IWorker worker =  (IWorker)Activator.GetObject(typeof(IWorker), url);
+            slaves.Add(new KeyValuePair<int, IWorker>(id, worker));
         }
 
         public void join()
@@ -70,7 +69,7 @@ namespace PADIMapNoReduce
 
         private bool amMaster()
         {
-            return Worker.getId() == 1;
+            return Worker.amMaster;
         }
 
         public WorkStruct hazWorkz()

@@ -15,59 +15,62 @@ namespace PADIMapNoReduce
 
     public class Worker
     {
-        public static int PORT = 30000;
+        public static int id;
+        public static bool amMaster = false;
+        private string url;
 
-        private static int id;
-        private int masterId = 1;
-        private int port;
-        private static string endpoint = "tracker";
+        public Worker(int id, string url, string trackerUrl) 
+        {
+            Worker.id = id;
+            this.url = url;
+            this.start(trackerUrl);
+        }
 
-        public Worker(int id) {
 
-            setId(id);
-            this.port = Worker.PORT + getId();
-
-            this.start();
+        private int getPort()
+        {
+            return int.Parse(this.url.Split(':')[2].Split('/')[0]);
+        }
+        public static int getId(){
+            return Worker.id;
         }
         
-        private void start()
+        private void start(string entryUrl)
         {
+            TcpChannel channel = new TcpChannel(getPort());
+            ChannelServices.RegisterChannel(channel, false);
+            RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "W", WellKnownObjectMode.Singleton);
+           
             try
             {
-                if (getId() == masterId)
+                if (entryUrl == null)
                 {
+                    Worker.amMaster = true;
                     Console.WriteLine("I am Master at 30001");
-                    TcpChannel channel = new TcpChannel(Worker.PORT + getId());
-                    ChannelServices.RegisterChannel(channel, false);
-                    RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "W", WellKnownObjectMode.Singleton);
                 }
                 else {
-                    string masterUrl = "tcp://localhost:" + (PORT + this.masterId).ToString() + "/W";
-                    ((IJobTracker)Activator.GetObject(typeof(IJobTracker), masterUrl)).connect(getId());
-                
-                
+
+                    ((IJobTracker)Activator.GetObject(typeof(IJobTracker), entryUrl)).connect(getId(),this.url);
+                    Console.WriteLine("Listening on: "+ this.url); ;
                 }
             }
             catch (SocketException)
             {
-                Console.Write("Failed to start on url: tcp://localhost:" + port + "/W");
+                Console.Write("Failed to start on url: " + url);
                 System.Environment.Exit(1);
             }
         }
-        public static int getId() 
-        {
-            return Worker.id;
-        }
-        public static void setId(int id) 
-        {
-            Worker.id = id;
-        }
+
 
         [STAThread]
         static void Main(string[] args)
         {
-            Worker w = new Worker(1);
+            //string cmd = Console.ReadLine();
 
+            new Worker(1, "tcp://localhost:30001/W", null);
+            //if (cmd.Equals("1")) 
+            //else if (cmd.Equals("2")) new Worker(2, "tcp://localhost:30002/W", "tcp://localhost:30001/W");
+            //else new Worker(3, "tcp://localhost:30003/W", "tcp://localhost:30001/W");
             System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
         }
@@ -104,10 +107,10 @@ namespace PADIMapNoReduce
         {
             this.id = Worker.getId();
             client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:10001/C"));
-            slaves.Add(new KeyValuePair<int, IWorker>(id, this));   //add nyself
+            slaves.Add(new KeyValuePair<int, IWorker>(id, this));   //add myself
         }
 
-        public void keepWorkingThread(IMap map, string filename, WorkStruct job)
+        public void keepWorkingThread(string map, string filename, WorkStruct job)
         {
             ISet<KeyValuePair<String, String>> megaList = new HashSet<KeyValuePair<String, String>>();
             String[] splits;
@@ -131,7 +134,7 @@ namespace PADIMapNoReduce
                 {
                     Thread.Sleep(del * 1000);
                 }
-
+                Console.WriteLine("Did: " + job.id);
                 client.storeSplit(megaList,job.id);
                 job = tracker.hazWorkz();
 
@@ -165,7 +168,7 @@ namespace PADIMapNoReduce
 
         }
 
-        public void startSplit(IMap map, string filename, WorkStruct job)
+        public void startSplit(string map, string filename, WorkStruct job)
         {
             new Thread(() => keepWorkingThread(map, filename, job)).Start();
         }
