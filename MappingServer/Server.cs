@@ -95,6 +95,7 @@ namespace PADIMapNoReduce
         private IClient client;
         private IList<KeyValuePair<String, String>> map;
         private Map mapObj;
+        private int delay = 0;
 
         private int id;
 
@@ -122,7 +123,16 @@ namespace PADIMapNoReduce
                 {
                     megaList.UnionWith(mapObj.map(s));
                 }
-                client.storeSplit(megaList, job.id);
+
+
+                int del = getDelay();
+
+                if (del > 0)
+                {
+                    Thread.Sleep(del * 1000);
+                }
+
+                client.storeSplit(megaList,job.id);
                 job = tracker.hazWorkz();
 
 
@@ -130,9 +140,29 @@ namespace PADIMapNoReduce
             tracker.join(); // when no more jobs at tracker
         }
 
+
         public string printStatus()
         {
             return "alive";
+        }
+
+        public void addDelay(int seconds) //delay worker
+        {
+            lock(this)
+            {
+                this.delay += seconds;
+            }
+        }
+
+        private int getDelay()
+        {
+            lock(this)
+            {
+                int del = this.delay;
+                this.delay = 0;
+                return del;
+            }
+
         }
 
         public void startSplit(IMap map, string filename, WorkStruct job)
