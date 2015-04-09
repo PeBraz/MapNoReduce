@@ -41,13 +41,21 @@ namespace PADIMapNoReduce
     class PuppetMasterRemote : MarshalByRefObject, IPuppetMaster
     {
 
-        private IList<KeyValuePair<int,int>> workers = new List<KeyValuePair<int,int>>();
+        private int idCount = 1;
+        private IList<KeyValuePair<int,IWorker>> slaves = new List<KeyValuePair<int,IWorker>>();
+        private Client client;
 
-        void startWorker(int workerId, int port, string targetWorker) 
+        public PuppetMasterRemote() 
         {
-            workers.Add(new KeyValuePair<int, int>(workerId,port));
-            new PADIMapNoReduce.Worker(port);
-            //blocked by Worker
+            this.client = new Client(1);   
+        }
+
+        void startWorker(int workerId, string newWorkerUrl, string targetWorker) 
+        {
+
+            IWorker slave = (IWorker)new Worker(workerId, newWorkerUrl, targetWorker);
+            slaves.Add(new KeyValuePair<int, IWorker>(workerId, slave));
+          
         }
 
         void submitAJob(string targetWorker, string inputFilePath, string outputDir, int numOfSplits, string mapClass)
@@ -60,9 +68,13 @@ namespace PADIMapNoReduce
             Thread.Sleep(secs * 1000);
         }
         void status() {
-            foreach (KeyValuePair<int, int> k in workers) 
+            foreach (KeyValuePair<int, IWorker> slave in slaves) 
             {
+<<<<<<< HEAD
                // ((IWorker)Activator.GetObject(typeof(IWorker), "localhost:" + k.Value + "/W")).printStatus();
+=======
+                slave.Value.printStatus();
+>>>>>>> 779522b04f66e9a9291a63a86ef58ab2d15e51d1
             }
 
         }

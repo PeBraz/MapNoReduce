@@ -207,13 +207,13 @@ namespace API {
         {
             String mapName = "Map";
             String code = @"..\..\..\Mapper\bin\Debug\Mapper.dll";
-            new Client(mapName,code);
+            new Client(1);
             //Application.Run(new FormChatClient());
         }
 
         private void submit_Click(object sender, System.EventArgs e) {
             //Stream myStream = null;
-            this.client.setFile( this.tb_InputPath.Text);
+            //this.client.setFile( this.tb_InputPath.Text);
         }  
 
         public void AddMsg(string s) { this.tb_Conversation.AppendText("\r\n" + s); } // Adiciona uma
