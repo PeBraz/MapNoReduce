@@ -12,9 +12,9 @@ using System.Threading;
 
 namespace PADIMapNoReduce
 {
-   public interface IPuppetMaster 
+    public interface IPuppetMaster
     {
-        void startWorker(int workerId, int WorkerUrl, string targetWorker); 
+        void startWorker(int workerId, int WorkerUrl, string targetWorker);
 
         void submitAJob(string targetWorker, string inputFilePath, string outputDir, int numOfSplits, string mapClass);
 
@@ -25,7 +25,7 @@ namespace PADIMapNoReduce
 
     class PuppetMaster
     {
-        public PuppetMaster() 
+        public PuppetMaster()
         {
 
             TcpChannel channel = new TcpChannel(10000);
@@ -41,11 +41,11 @@ namespace PADIMapNoReduce
     class PuppetMasterRemote : MarshalByRefObject, IPuppetMaster
     {
 
-        private IList<KeyValuePair<int,int>> workers = new List<KeyValuePair<int,int>>();
+        private IList<KeyValuePair<int, int>> workers = new List<KeyValuePair<int, int>>();
 
-        void startWorker(int workerId, int port, string targetWorker) 
+        void startWorker(int workerId, int port, string targetWorker)
         {
-            workers.Add(new KeyValuePair<int, int>(workerId,port));
+            workers.Add(new KeyValuePair<int, int>(workerId, port));
             new PADIMapNoReduce.Worker(port);
             //blocked by Worker
         }
@@ -56,19 +56,21 @@ namespace PADIMapNoReduce
             //
         }
 
-        void wait(int secs) {
+        void wait(int secs)
+        {
             Thread.Sleep(secs * 1000);
         }
-        void status() {
-            foreach (KeyValuePair<int, int> k in workers) 
+        void status()
+        {
+            foreach (KeyValuePair<int, int> k in workers)
             {
-               // ((IWorker)Activator.GetObject(typeof(IWorker), "localhost:" + k.Value + "/W")).printStatus();
+                // ((IWorker)Activator.GetObject(typeof(IWorker), "localhost:" + k.Value + "/W")).printStatus();
             }
 
         }
-        void sloww() 
-        { 
-        
+        void sloww()
+        {
+
         }
 
     }
