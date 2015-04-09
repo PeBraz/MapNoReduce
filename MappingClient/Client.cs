@@ -31,7 +31,7 @@ namespace PADIMapNoReduce
             bool success = false;
             do
             {
-                success = this.me.newJob("tcp://localhost:30001/W", "Map", Client.path(@"Mapper\bin\Debug\Mapper.dll"), Client.path("illumhis.txt"), @"H:\Documents\MapNoReduce\Outputs\", 1001);
+                success = this.me.newJob("tcp://localhost:30001/W", "Map", Client.path(@"Mapper\bin\Debug\Mapper.dll"), Client.path("illumhis.txt"), Client.path(@"Outputs\"), 1001);
 
                 if (!success) 
                     Console.WriteLine("Connection failed, retrying...");

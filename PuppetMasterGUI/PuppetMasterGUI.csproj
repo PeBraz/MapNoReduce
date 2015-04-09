@@ -48,9 +48,6 @@
     <Compile Include="PuppetMasterAPI.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="PuppetMasterAPI.Designer.cs">
-      <DependentUpon>PuppetMasterAPI.cs</DependentUpon>
-    </Compile>
     <Compile Include="PuppetMaster.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="PuppetMasterAPI.resx">

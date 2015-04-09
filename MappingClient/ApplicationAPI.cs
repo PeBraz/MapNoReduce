@@ -205,9 +205,7 @@ namespace API {
         [STAThread]
         static void Main(string[] args)
         {
-            String mapName = "Map";
-            String code = @"..\..\..\Mapper\bin\Debug\Mapper.dll";
-            new Client(1);
+            //new Client(1);
             //Application.Run(new FormChatClient());
         }
 

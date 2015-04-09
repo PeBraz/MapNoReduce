@@ -26,7 +26,6 @@ namespace PADIMapNoReduce
             this.start(trackerUrl);
         }
 
-
         private int getPort()
         {
             return int.Parse(this.url.Split(':')[2].Split('/')[0]);
