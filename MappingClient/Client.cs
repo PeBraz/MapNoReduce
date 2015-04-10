@@ -15,16 +15,18 @@ namespace PADIMapNoReduce
     public class Client
     {
         private IClient me;
-
-
-
+        public static string trackerUrl;
         public Client(int id)
         {
-
+            
             TcpChannel channel = new TcpChannel(10000 + id);
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(ClientRemote), "C", WellKnownObjectMode.Singleton);
 
+        }
+
+        public void init(int trackerId){
+            Client.trackerUrl = "tcp://localhost:" +(30000+trackerId).ToString()+"/W";
         }
 
         [STAThread]
