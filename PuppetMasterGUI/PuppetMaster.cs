@@ -17,9 +17,15 @@ namespace PADIMapNoReduce
     {
         void startWorker(int workerId, string WorkerUrl, string targetWorker);
 
-        void submitAJob(string targetWorker, string inputFilePath, string outputDir, int numOfSplits, string mapClass);
+        void submitAJob(string targetWorker, string inputFilePath, string outputDir, int numOfSplits, string mapClass, string mapDll);
 
         void wait(int seconds);
+
+        void sloww(int id, int seconds);
+
+        void freezew(int id);
+
+        void unfreezew(int id);
 
         //void status();
     }
@@ -28,14 +34,14 @@ namespace PADIMapNoReduce
     {
         private IPuppetMaster me;
 
-        public PuppetMaster()
+        public PuppetMaster(int id)
         {
 
-            TcpChannel channel = new TcpChannel(10000);
+            TcpChannel channel = new TcpChannel(10000 + id);
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(PuppetMasterRemote), "PM", WellKnownObjectMode.Singleton);
 
-            this.me = ((IPuppetMaster)Activator.GetObject(typeof(IPuppetMaster), "tcp://localhost:20001/PM"));
+            this.me = ((IPuppetMaster)Activator.GetObject(typeof(IPuppetMaster), "tcp://localhost:" +(30000 + id).ToString() +"/PM"));
 
             Console.WriteLine("Enter to exit");
             Console.ReadLine();
@@ -54,27 +60,27 @@ namespace PADIMapNoReduce
             }
             else if (words[0].Equals("submit"))
             {
-                //submit(words[1], words[2], words[3], words[4], words[5], words[6]);
+                this.me.submitAJob(words[1], words[2], words[3], int.Parse(words[4]), words[5], words[6]);
             }
             else if (words[0].Equals("wait"))
             {
-                //wait(words[1]);
+                this.me.wait(int.Parse(words[1]));
             }
             else if (words[0].Equals("status"))
             {
-                //status();
+                
             }
             else if (words[0].Equals("sloww"))
             {
-                //slow(int.Parse(words[1]));
+                this.me.sloww(int.Parse(words[1]), int.Parse(words[2]));
             }
             else if (words[0].Equals("freezew"))
             {
-                //freezew(int.Parse(words[1]));
+                this.me.freezew(int.Parse(words[1]));
             }
             else if (words[0].Equals("unfreezew"))
             {
-                //unfreezew(int.Parse(words[1]));
+                this.me.unfreezew(int.Parse(words[1]));
             }
             else if (words[0].Equals("freezec"))
             {
@@ -89,7 +95,7 @@ namespace PADIMapNoReduce
 
         public void readFile(string filename)
         {
-            String[] lines = File.ReadAllLines(@"ola.txt");
+            String[] lines = File.ReadAllLines(filename);
             foreach (var line in lines)
             {
                 parse(line.ToLower());
@@ -120,15 +126,47 @@ namespace PADIMapNoReduce
             new Client(id);
 
             IClient client = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + id).ToString() + "/C");
-            client.newJob(targetWorker, mapClass, mapDll, inputFilePath, outputDir, numOfSplits);
+            client.newJob(targetWorker, inputFilePath, outputDir, numOfSplits, mapClass, mapDll);
 
-            //TODO((IWorker)Activator.GetObject(typeof(IWorker),targetWorker)).startSplit();
-            //
         }
 
         public void wait(int secs)
         {
             Thread.Sleep(secs * 1000);
+        }
+
+        public void sloww(int id, int seconds) 
+        {
+            IWorker w = getWorker(id);
+            if (w != null)
+                w.delay(seconds);
+            else
+                Console.WriteLine("Worker not found");
+        
+        }
+        public void freezew(int id) {
+            IWorker w = getWorker(id);
+            if (w != null)
+                w.freeze();
+            else
+                Console.WriteLine("Worker not found");
+        }
+        public void unfreezew(int id) 
+        {
+            IWorker w = getWorker(id);
+            if (w != null)
+                w.unfreeze();
+            else
+                Console.WriteLine("Worker not found");
+        }
+
+        private IWorker getWorker(int id) 
+        {
+            foreach (KeyValuePair<int,IWorker> worker in this.workers) 
+            {
+                if (worker.Key == id) return worker.Value;
+            }
+            return null;
         }
 
     }

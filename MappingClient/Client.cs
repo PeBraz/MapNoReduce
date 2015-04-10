@@ -26,22 +26,33 @@ namespace PADIMapNoReduce
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(ClientRemote), "C", WellKnownObjectMode.Singleton);
 
+        }
 
-            this.me = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + id).ToString() + "/C");
+        [STAThread]
+        static void Main(string[] args)
+        {
+            //string cmd = Console.ReadLine();
+
+            new Client(1);
+            IClient me = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + 1).ToString() + "/C");
             bool success = false;
             do
             {
-                success = this.me.newJob("tcp://localhost:30001/W", "Map", Client.path(@"Mapper\bin\Debug\Mapper.dll"), Client.path("illumhis.txt"), Client.path(@"Outputs\"), 1001);
-
-                if (!success) 
+                success = me.newJob("tcp://localhost:30001/W", Client.path("illumhis.txt"), Client.path(@"Outputs\"), 1001, "Map", Client.path(@"Mapper\bin\Debug\Mapper.dll"));
+                if (!success)
                     Console.WriteLine("Connection failed, retrying...");
 
             } while (!success);
 
             Console.WriteLine("<Success>");
             Console.ReadLine();
-
+            //if (cmd.Equals("1")) 
+            //else if (cmd.Equals("2")) new Worker(2, "tcp://localhost:30002/W", "tcp://localhost:30001/W");
+            //else new Worker(3, "tcp://localhost:30003/W", "tcp://localhost:30001/W");
+            System.Console.WriteLine("Press <enter> to terminate...");
+            System.Console.ReadLine();
         }
+        
         public static string path(string file)
         {
             return @"..\..\..\" + file;
@@ -84,8 +95,6 @@ namespace PADIMapNoReduce
         public void storeSplit(ISet<KeyValuePair<String, String>> set, int splitID)
         {
 
-  
-
             if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
 
             using (StreamWriter file = new StreamWriter(outputDir + splitID.ToString() + ".out"))
@@ -100,7 +109,8 @@ namespace PADIMapNoReduce
         /**
          *  returns success of connecting to tracker
          */
-        public bool newJob(string trackerUrl, string mapClass, string mapDll, string inputFilePath, string outputDir, int numOfSplits)
+
+        public bool newJob(string trackerUrl, string inputFilePath, string outputDir, int numOfSplits,string mapClass,string mapDll)
         {
             this.tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), trackerUrl);
 

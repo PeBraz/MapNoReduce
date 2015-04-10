@@ -17,23 +17,26 @@ namespace PADIMapNoReduce
     {
         public static int id;
         public static bool amMaster = false;
-        private string url;
+        private static string url;
 
         public Worker(int id, string url, string trackerUrl) 
         {
             Worker.id = id;
-            this.url = url;
+            Worker.url = url;
             this.start(trackerUrl);
         }
 
         private int getPort()
         {
-            return int.Parse(this.url.Split(':')[2].Split('/')[0]);
+            return int.Parse(Worker.url.Split(':')[2].Split('/')[0]);
         }
         public static int getId(){
             return Worker.id;
         }
-        
+        public static string getUrl() 
+        {
+            return Worker.url;
+        }
         private void start(string entryUrl)
         {
             TcpChannel channel = new TcpChannel(getPort());
@@ -48,9 +51,9 @@ namespace PADIMapNoReduce
                     Console.WriteLine("I am Master at 30001");
                 }
                 else {
-
-                    ((IJobTracker)Activator.GetObject(typeof(IJobTracker), entryUrl)).connect(getId(),this.url);
-                    Console.WriteLine("Listening on: "+ this.url); ;
+                    Console.WriteLine(entryUrl);
+                    ((IJobTracker)Activator.GetObject(typeof(IJobTracker), entryUrl)).connect(getId(),getUrl());
+                    Console.WriteLine("Listening on: "+ getUrl()); ;
                 }
             }
             catch (SocketException)
@@ -65,11 +68,13 @@ namespace PADIMapNoReduce
         static void Main(string[] args)
         {
             //string cmd = Console.ReadLine();
-
-            new Worker(1, "tcp://localhost:30001/W", null);
-            //if (cmd.Equals("1")) 
-            //else if (cmd.Equals("2")) new Worker(2, "tcp://localhost:30002/W", "tcp://localhost:30001/W");
-            //else new Worker(3, "tcp://localhost:30003/W", "tcp://localhost:30001/W");
+            Console.WriteLine("Choose number (1 for master; 2(+) for slaves): ");
+            int opt = int.Parse(Console.ReadLine());
+            if (opt == 1)
+                new Worker(1, "tcp://localhost:30001/W", null);
+            else
+                new Worker(opt, "tcp://localhost:" + (30000 + opt).ToString() + "/W", "tcp://localhost:30001/W");
+            
             System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
         }
@@ -97,7 +102,10 @@ namespace PADIMapNoReduce
         private IClient client;
         private IList<KeyValuePair<String, String>> map;
         private Map mapObj;
-        private int delay = 0;
+      //  private int delay = 0;
+
+
+        private Object delayLock;
 
         private int id;
 
@@ -106,19 +114,22 @@ namespace PADIMapNoReduce
         {
             this.id = Worker.getId();
             client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:10001/C"));
-            slaves.Add(new KeyValuePair<int, IWorker>(id, this));   //add myself
+           // slaves.Add(new KeyValuePair<int, IWorker>(id, this));   //add myself
+            slaves.Add(new KeyValuePair<int, IWorker>(id, (IWorker)Activator.GetObject(typeof(IWorker), Worker.getUrl())));
         }
 
-        public void keepWorkingThread(string map, string filename, WorkStruct job)
+        public void keepWorkingThread(string map, string filename, WorkStruct? job)
         {
             ISet<KeyValuePair<String, String>> megaList = new HashSet<KeyValuePair<String, String>>();
             String[] splits;
             IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:30001/W");
 
-            do
+        
+            while (job != null)
             {
+              
                 megaList.Clear();
-                splits = client.getSplit(job.lower, job.higher);
+                splits = client.getSplit(job.Value.lower, job.Value.higher);
                 if (splits == null) break;
 
                 foreach (String s in splits)
@@ -127,20 +138,19 @@ namespace PADIMapNoReduce
                 }
 
 
-                int del = getDelay();
 
-                if (del > 0)
-                {
-                    Thread.Sleep(del * 1000);
-                }
-                Console.WriteLine("Did: " + job.id);
-                client.storeSplit(megaList,job.id);
+                lock (delayLock) {  };
+                
+             
+                Console.WriteLine("Did: " + job.Value.id);
+                client.storeSplit(megaList,job.Value.id);
                 job = tracker.hazWorkz();
 
 
-            } while (job.id != -1);
+            }
             tracker.join(); // when no more jobs at tracker
         }
+
 
 
         public string printStatus()
@@ -148,14 +158,29 @@ namespace PADIMapNoReduce
             return "alive";
         }
 
+        public void delay(int seconds)
+        {
+            Console.WriteLine("Pausing thread execution for: " + seconds.ToString() + " seconds.");
+            lock (delayLock) { Thread.Sleep(seconds * 1000); }
+        }
+
+        public void freeze() 
+        {
+            Monitor.Enter(delayLock);
+        }
+        public void unfreeze() 
+        {
+            Monitor.Exit(delayLock);
+        }
+        /*
         public void addDelay(int seconds) //delay worker
         {
             lock(this)
             {
                 this.delay += seconds;
             }
-        }
-
+        }*/
+        /*
         private int getDelay()
         {
             lock(this)
@@ -165,11 +190,11 @@ namespace PADIMapNoReduce
                 return del;
             }
 
-        }
+        }*/
 
-        public void startSplit(string map, string filename, WorkStruct job)
+        public void startSplit(string map, string filename, WorkStruct? job)
         {
-            new Thread(() => keepWorkingThread(map, filename, job)).Start();
+            new Thread(() => keepWorkingThread(map, filename, job));
         }
 
         public void createMapper(byte[] code, string className)

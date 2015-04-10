@@ -24,17 +24,14 @@ namespace PADIMapNoReduce
 
             for (int i = 0, index = 0; i < numSplits; i++, index += step + ((remainder > 0) ? 1 : 0))
             {
-                WorkStruct ws = new WorkStruct();
-                ws.id = i;
-                ws.lower = index;
-                ws.higher = index + step + ((remainder > 0) ? 1 : 0);
+                WorkStruct ws = new WorkStruct(index, index + step + ((remainder > 0) ? 1 : 0), i);
                 queue.Enqueue(ws);
                 remainder--;
             }
 
             foreach (KeyValuePair<int, IWorker> slave in slaves)
             {
-
+                if (queue.Count == 0) break;
                 slave.Value.startSplit(map, filename, (WorkStruct)queue.Dequeue());
             }
 
@@ -72,11 +69,11 @@ namespace PADIMapNoReduce
             return Worker.amMaster;
         }
 
-        public WorkStruct hazWorkz()
+        public WorkStruct? hazWorkz()
         {
             lock (this)
             {
-                return queue.Count == 0 ? new WorkStruct(0, 0, -1) : (WorkStruct)queue.Dequeue();
+                return queue.Count == 0 ? (WorkStruct?)null : (WorkStruct)queue.Dequeue();
             }
         }
 
