@@ -16,7 +16,6 @@ namespace PADIMapNoReduce
     {
         private IClient me;
 
-        private string inputFilePath = @"..\..\..\ola.txt";
 
 
         public Client(int id)
@@ -32,8 +31,8 @@ namespace PADIMapNoReduce
         static void Main(string[] args)
         {
             //string cmd = Console.ReadLine();
-
-            new Client(1);
+            new Client(int.Parse(args[0]));
+            /*
             IClient me = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + 1).ToString() + "/C");
             bool success = false;
             do
@@ -48,7 +47,7 @@ namespace PADIMapNoReduce
             Console.ReadLine();
             //if (cmd.Equals("1")) 
             //else if (cmd.Equals("2")) new Worker(2, "tcp://localhost:30002/W", "tcp://localhost:30001/W");
-            //else new Worker(3, "tcp://localhost:30003/W", "tcp://localhost:30001/W");
+            //else new Worker(3, "tcp://localhost:30003/W", "tcp://localhost:30001/W");*/
             System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
         }
@@ -113,10 +112,10 @@ namespace PADIMapNoReduce
         public bool newJob(string trackerUrl, string inputFilePath, string outputDir, int numOfSplits,string mapClass,string mapDll)
         {
             this.tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), trackerUrl);
-
             try
             {
                 this.outputDir = outputDir;
+                
                 this.tracker.SendMapper(File.ReadAllBytes(mapDll), mapClass);
                 int numLines = ClientRemote.setFile(inputFilePath);
                 this.tracker.submitJob(mapClass, inputFilePath, numOfSplits, numLines);

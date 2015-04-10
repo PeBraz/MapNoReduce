@@ -25,11 +25,14 @@ namespace API {
         private System.Windows.Forms.Button bt_browse;
         private System.Windows.Forms.Label lb_separate;
         private Label lb_Script;
-        private TextBox tb_Port;
-        private Label lb_Port;
+        private TextBox tb_id;
+        private Label lb_id;
         private Label label1;
-        
-        private static PuppetMaster puppetMaster;
+
+        private PuppetMaster me;
+        private Button bt_id;
+
+        private static PuppetMaster puppetMaster = null;
         public FormPuppetMaster() {
             InitializeComponent();
         }
@@ -57,9 +60,10 @@ namespace API {
             this.bt_browse = new System.Windows.Forms.Button();
             this.lb_separate = new System.Windows.Forms.Label();
             this.lb_Script = new System.Windows.Forms.Label();
-            this.tb_Port = new System.Windows.Forms.TextBox();
-            this.lb_Port = new System.Windows.Forms.Label();
+            this.tb_id = new System.Windows.Forms.TextBox();
+            this.lb_id = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.bt_id = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // tb_Conversation
@@ -161,22 +165,22 @@ namespace API {
             this.lb_Script.Text = "Script :";
             this.lb_Script.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // tb_Port
+            // tb_id
             // 
-            this.tb_Port.Location = new System.Drawing.Point(64, 12);
-            this.tb_Port.Name = "tb_Port";
-            this.tb_Port.Size = new System.Drawing.Size(33, 20);
-            this.tb_Port.TabIndex = 11;
-            this.tb_Port.TextChanged += new System.EventHandler(this.tb_Port_TextChanged);
+            this.tb_id.Location = new System.Drawing.Point(64, 12);
+            this.tb_id.Name = "tb_id";
+            this.tb_id.Size = new System.Drawing.Size(33, 20);
+            this.tb_id.TabIndex = 11;
+            this.tb_id.TextChanged += new System.EventHandler(this.tb_Port_TextChanged);
             // 
-            // lb_Port
+            // lb_id
             // 
-            this.lb_Port.Location = new System.Drawing.Point(29, 12);
-            this.lb_Port.Name = "lb_Port";
-            this.lb_Port.Size = new System.Drawing.Size(69, 19);
-            this.lb_Port.TabIndex = 12;
-            this.lb_Port.Text = "Port : ";
-            this.lb_Port.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.lb_id.Location = new System.Drawing.Point(29, 12);
+            this.lb_id.Name = "lb_id";
+            this.lb_id.Size = new System.Drawing.Size(34, 19);
+            this.lb_id.TabIndex = 12;
+            this.lb_id.Text = "Port : ";
+            this.lb_id.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // label1
             // 
@@ -187,14 +191,28 @@ namespace API {
             this.label1.TabIndex = 13;
             this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // bt_id
+            // 
+            this.bt_id.BackColor = System.Drawing.SystemColors.ButtonShadow;
+            this.bt_id.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.bt_id.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.bt_id.Location = new System.Drawing.Point(111, 7);
+            this.bt_id.Name = "bt_id";
+            this.bt_id.Size = new System.Drawing.Size(137, 33);
+            this.bt_id.TabIndex = 14;
+            this.bt_id.Text = "Start PuppetMaster";
+            this.bt_id.UseVisualStyleBackColor = false;
+            this.bt_id.Click += new System.EventHandler(this.bt_id_click);
+            // 
             // FormPuppetMaster
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.BackColor = System.Drawing.SystemColors.GrayText;
             this.ClientSize = new System.Drawing.Size(581, 368);
+            this.Controls.Add(this.bt_id);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.tb_Port);
-            this.Controls.Add(this.lb_Port);
+            this.Controls.Add(this.tb_id);
+            this.Controls.Add(this.lb_id);
             this.Controls.Add(this.tb_Command);
             this.Controls.Add(this.tb_InputPath);
             this.Controls.Add(this.lb_Script);
@@ -216,12 +234,17 @@ namespace API {
         [STAThread]
         static void Main(string[] args)
         {
-            puppetMaster = new PuppetMaster();
+
             Application.Run(new FormPuppetMaster());
         }
 
         private void submit_Click(object sender, System.EventArgs e) {
-            puppetMaster.readFile(this.tb_InputPath.Text);            
+            if (this.me == null) 
+            { 
+               MessageBox.Show("Create a puppet Master first");
+               return;
+            }
+            this.me.readFile(this.tb_InputPath.Text);            
         }  
 
         public void AddMsg(string s) { this.tb_Conversation.AppendText("\r\n" + s); } // Adiciona uma
@@ -252,7 +275,21 @@ namespace API {
         private void tb_Port_TextChanged(object sender, EventArgs e)
         {
 
-        } // --------------------
+        }
+
+        private void bt_id_click(object sender, EventArgs e)
+        {
+            string pmId = this.tb_id.Text;
+
+            if (pmId == null) 
+            {
+                MessageBox.Show("No id given");
+                return;
+            }
+
+            this.me = new PuppetMaster(int.Parse(pmId));  //local instance
+        }
+
     }
 
   

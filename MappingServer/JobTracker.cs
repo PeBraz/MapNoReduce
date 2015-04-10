@@ -37,7 +37,7 @@ namespace PADIMapNoReduce
 
             while (done < numSlaves)
             {
-               Thread.Sleep(10000);
+               Thread.Sleep(1000);
             }
 
             done = 0;

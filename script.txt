@@ -1,6 +1,17 @@
-%O mangas faz commmit de cenas
-% start 3 work
-WORKER 1 tcp://localhost:20002/PM tcp://localhost:30001/PM
-WORKER 2 tcp://localhost:20003/PM tcp://localhost:30002/PM tcp://localhost:20002/PM tcp://localhost:30001/PM 
-WORKER 3  tcp://localhost:20004PM tcp://localhost:30003/PM tcp://localhost:20003/PM tcp://localhost:30001/PM 
+
+
+% starts 2 workers
+% requires 3 puppet masters with ids 1, 2 and 3
+
+
+%$PROJECTPATH = H:\Documents\MapNoReduce
+
+WORKER 1 tcp://localhost:20001/PM tcp://localhost:30001/W
+WORKER 2 tcp://localhost:20001/PM tcp://localhost:30002/W tcp://localhost:30001/W
+WORKER 3 tcp://localhost:20001/PM tcp://localhost:30003/W tcp://localhost:30001/W
+WORKER 4 tcp://localhost:20001/PM tcp://localhost:30004/W tcp://localhost:30001/W
+WORKER 5 tcp://localhost:20001/PM tcp://localhost:30005/W tcp://localhost:30001/W
+
+% submits a job
+SUBMIT tcp://localhost:30001/W H:\Documents\MapNoReduce\log.txt H:\Documents\MapNoReduce\Outputs\ 500 Map H:\Documents\MapNoReduce\Mapper\bin\Debug\Mapper.dll
 

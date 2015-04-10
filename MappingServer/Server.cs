@@ -67,13 +67,14 @@ namespace PADIMapNoReduce
         [STAThread]
         static void Main(string[] args)
         {
-            //string cmd = Console.ReadLine();
-            Console.WriteLine("Choose number (1 for master; 2(+) for slaves): ");
-            int opt = int.Parse(Console.ReadLine());
-            if (opt == 1)
-                new Worker(1, "tcp://localhost:30001/W", null);
-            else
-                new Worker(opt, "tcp://localhost:" + (30000 + opt).ToString() + "/W", "tcp://localhost:30001/W");
+            // 1st id of the worker
+            // 2nd url of the new worker
+            // 3rd (optional) tracker to connect
+
+            if (args.Length == 2) 
+                new Worker(int.Parse(args[0]), args[1], null);
+            else if (args.Length == 3)
+                new Worker(int.Parse(args[0]), args[1], args[2]);
             
             System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
@@ -105,7 +106,7 @@ namespace PADIMapNoReduce
       //  private int delay = 0;
 
 
-        private Object delayLock;
+        private Object delayLock = new Object();
 
         private int id;
 
@@ -124,10 +125,11 @@ namespace PADIMapNoReduce
             String[] splits;
             IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:30001/W");
 
-        
+
             while (job != null)
             {
-              
+           
+      
                 megaList.Clear();
                 splits = client.getSplit(job.Value.lower, job.Value.higher);
                 if (splits == null) break;
@@ -136,7 +138,6 @@ namespace PADIMapNoReduce
                 {
                     megaList.UnionWith(mapObj.map(s));
                 }
-
 
 
                 lock (delayLock) {  };
@@ -172,29 +173,11 @@ namespace PADIMapNoReduce
         {
             Monitor.Exit(delayLock);
         }
-        /*
-        public void addDelay(int seconds) //delay worker
-        {
-            lock(this)
-            {
-                this.delay += seconds;
-            }
-        }*/
-        /*
-        private int getDelay()
-        {
-            lock(this)
-            {
-                int del = this.delay;
-                this.delay = 0;
-                return del;
-            }
 
-        }*/
 
         public void startSplit(string map, string filename, WorkStruct? job)
         {
-            new Thread(() => keepWorkingThread(map, filename, job));
+            new Thread(() => keepWorkingThread(map, filename, job)).Start();
         }
 
         public void createMapper(byte[] code, string className)
