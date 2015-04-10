@@ -9,6 +9,7 @@ using System.Runtime.Remoting.Channels.Tcp;
 using PADIMapNoReduce;
 using System.Threading;
 using System.IO;
+using System.Windows.Forms;
 
 
 namespace PADIMapNoReduce
@@ -17,7 +18,7 @@ namespace PADIMapNoReduce
     {
         void startWorker(int workerId, string WorkerUrl, string targetWorker);
 
-        void submitAJob(string targetWorker, string inputFilePath, string outputDir, int numOfSplits, string mapClass);
+        void submitAJob(string targetWorker, string inputFilePath, string outputDir, int numOfSplits, string mapClass, string mapDll);
 
         void wait(int seconds);
 
@@ -30,7 +31,6 @@ namespace PADIMapNoReduce
 
         public PuppetMaster()
         {
-
             TcpChannel channel = new TcpChannel(10000);
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(PuppetMasterRemote), "PM", WellKnownObjectMode.Singleton);
@@ -41,8 +41,22 @@ namespace PADIMapNoReduce
             Console.ReadLine();
         }
 
+        public void readFile(string filename)
+        {
+            String[] lines = File.ReadAllLines(filename);
+            foreach (var line in lines)
+            {
+                parse(line.ToLower());
+            }
+        }
+
         public void parse(string line)
         {
+            if (line.Length == 0)
+            {
+                MessageBox.Show("Error: The command is empty");
+                return;
+            }
             String[] words = line.Split(' ');
             int size = words.Length - 1;
 
@@ -85,15 +99,7 @@ namespace PADIMapNoReduce
                 //unfreezec(int.Parse(words[1]));
             }
             else Console.WriteLine("erro");
-        }
-
-        public void readFile(string filename)
-        {
-            String[] lines = File.ReadAllLines(@"ola.txt");
-            foreach (var line in lines)
-            {
-                parse(line.ToLower());
-            }
+            MessageBox.Show("Error: The command is incorrect");
         }
 
         public void startWorker(int id, string pmUrl, string serviceUrl, string entryUrl)
