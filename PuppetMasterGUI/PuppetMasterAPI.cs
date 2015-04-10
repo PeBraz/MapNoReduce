@@ -18,20 +18,20 @@ namespace API {
         private System.Windows.Forms.TextBox tb_Conversation;
         private System.Windows.Forms.TextBox tb_InputPath;
         private System.Windows.Forms.Button bt_Submit;
-        private System.Windows.Forms.TextBox tb_Port;
+        private System.Windows.Forms.TextBox tb_Command;
         private System.Windows.Forms.Label lb_Command;
         private System.Windows.Forms.Button bt_SubmitCommand;
         private System.Windows.Forms.OpenFileDialog of_Browse;
         private System.Windows.Forms.Button bt_browse;
         private System.Windows.Forms.Label lb_separate;
         private Label lb_Script;
+        private TextBox tb_Port;
+        private Label lb_Port;
+        private Label label1;
         
         private static PuppetMaster puppetMaster;
         public FormPuppetMaster() {
-            //this.client = new Client();
-            // Required for Windows Form Designer support
             InitializeComponent();
-            // TODO: Add any constructor code after InitializeComponent call
         }
 
         /// Clean up any resources being used.
@@ -50,13 +50,16 @@ namespace API {
             this.tb_Conversation = new System.Windows.Forms.TextBox();
             this.tb_InputPath = new System.Windows.Forms.TextBox();
             this.bt_Submit = new System.Windows.Forms.Button();
-            this.tb_Port = new System.Windows.Forms.TextBox();
+            this.tb_Command = new System.Windows.Forms.TextBox();
             this.lb_Command = new System.Windows.Forms.Label();
             this.bt_SubmitCommand = new System.Windows.Forms.Button();
             this.of_Browse = new System.Windows.Forms.OpenFileDialog();
             this.bt_browse = new System.Windows.Forms.Button();
             this.lb_separate = new System.Windows.Forms.Label();
             this.lb_Script = new System.Windows.Forms.Label();
+            this.tb_Port = new System.Windows.Forms.TextBox();
+            this.lb_Port = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.SuspendLayout();
             // 
             // tb_Conversation
@@ -64,7 +67,7 @@ namespace API {
             this.tb_Conversation.AcceptsReturn = true;
             this.tb_Conversation.AcceptsTab = true;
             this.tb_Conversation.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.tb_Conversation.Location = new System.Drawing.Point(384, 4);
+            this.tb_Conversation.Location = new System.Drawing.Point(378, 67);
             this.tb_Conversation.Multiline = true;
             this.tb_Conversation.Name = "tb_Conversation";
             this.tb_Conversation.ReadOnly = true;
@@ -74,7 +77,7 @@ namespace API {
             // 
             // tb_InputPath
             // 
-            this.tb_InputPath.Location = new System.Drawing.Point(64, 266);
+            this.tb_InputPath.Location = new System.Drawing.Point(64, 278);
             this.tb_InputPath.Name = "tb_InputPath";
             this.tb_InputPath.Size = new System.Drawing.Size(424, 20);
             this.tb_InputPath.TabIndex = 1;
@@ -84,7 +87,7 @@ namespace API {
             this.bt_Submit.BackColor = System.Drawing.SystemColors.ButtonShadow;
             this.bt_Submit.Cursor = System.Windows.Forms.Cursors.Hand;
             this.bt_Submit.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.bt_Submit.Location = new System.Drawing.Point(111, 302);
+            this.bt_Submit.Location = new System.Drawing.Point(111, 314);
             this.bt_Submit.Name = "bt_Submit";
             this.bt_Submit.Size = new System.Drawing.Size(314, 32);
             this.bt_Submit.TabIndex = 2;
@@ -92,16 +95,16 @@ namespace API {
             this.bt_Submit.UseVisualStyleBackColor = false;
             this.bt_Submit.Click += new System.EventHandler(this.submit_Click);
             // 
-            // tb_Port
+            // tb_Command
             // 
-            this.tb_Port.Location = new System.Drawing.Point(64, 53);
-            this.tb_Port.Name = "tb_Port";
-            this.tb_Port.Size = new System.Drawing.Size(300, 20);
-            this.tb_Port.TabIndex = 3;
+            this.tb_Command.Location = new System.Drawing.Point(64, 124);
+            this.tb_Command.Name = "tb_Command";
+            this.tb_Command.Size = new System.Drawing.Size(300, 20);
+            this.tb_Command.TabIndex = 3;
             // 
             // lb_Command
             // 
-            this.lb_Command.Location = new System.Drawing.Point(3, 54);
+            this.lb_Command.Location = new System.Drawing.Point(7, 123);
             this.lb_Command.Name = "lb_Command";
             this.lb_Command.Size = new System.Drawing.Size(69, 19);
             this.lb_Command.TabIndex = 4;
@@ -113,13 +116,13 @@ namespace API {
             this.bt_SubmitCommand.BackColor = System.Drawing.SystemColors.ButtonShadow;
             this.bt_SubmitCommand.Cursor = System.Windows.Forms.Cursors.Hand;
             this.bt_SubmitCommand.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.bt_SubmitCommand.Location = new System.Drawing.Point(80, 104);
+            this.bt_SubmitCommand.Location = new System.Drawing.Point(78, 173);
             this.bt_SubmitCommand.Name = "bt_SubmitCommand";
             this.bt_SubmitCommand.Size = new System.Drawing.Size(239, 33);
             this.bt_SubmitCommand.TabIndex = 5;
             this.bt_SubmitCommand.Text = "SubmitJob";
             this.bt_SubmitCommand.UseVisualStyleBackColor = false;
-            this.bt_SubmitCommand.Click += new System.EventHandler(this.button2_Click);
+            this.bt_SubmitCommand.Click += new System.EventHandler(this.submitCommand_Click);
             // 
             // of_Browse
             // 
@@ -132,7 +135,7 @@ namespace API {
             // 
             this.bt_browse.BackColor = System.Drawing.SystemColors.ButtonShadow;
             this.bt_browse.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.bt_browse.Location = new System.Drawing.Point(494, 264);
+            this.bt_browse.Location = new System.Drawing.Point(494, 275);
             this.bt_browse.Name = "bt_browse";
             this.bt_browse.Size = new System.Drawing.Size(53, 23);
             this.bt_browse.TabIndex = 8;
@@ -143,7 +146,7 @@ namespace API {
             // lb_separate
             // 
             this.lb_separate.BackColor = System.Drawing.Color.Gainsboro;
-            this.lb_separate.Location = new System.Drawing.Point(-10, 160);
+            this.lb_separate.Location = new System.Drawing.Point(-7, 223);
             this.lb_separate.Name = "lb_separate";
             this.lb_separate.Size = new System.Drawing.Size(591, 21);
             this.lb_separate.TabIndex = 9;
@@ -151,19 +154,48 @@ namespace API {
             // 
             // lb_Script
             // 
-            this.lb_Script.Location = new System.Drawing.Point(20, 266);
+            this.lb_Script.Location = new System.Drawing.Point(20, 282);
             this.lb_Script.Name = "lb_Script";
             this.lb_Script.Size = new System.Drawing.Size(43, 18);
             this.lb_Script.TabIndex = 10;
             this.lb_Script.Text = "Script :";
             this.lb_Script.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
+            // tb_Port
+            // 
+            this.tb_Port.Location = new System.Drawing.Point(64, 12);
+            this.tb_Port.Name = "tb_Port";
+            this.tb_Port.Size = new System.Drawing.Size(33, 20);
+            this.tb_Port.TabIndex = 11;
+            this.tb_Port.TextChanged += new System.EventHandler(this.tb_Port_TextChanged);
+            // 
+            // lb_Port
+            // 
+            this.lb_Port.Location = new System.Drawing.Point(29, 12);
+            this.lb_Port.Name = "lb_Port";
+            this.lb_Port.Size = new System.Drawing.Size(69, 19);
+            this.lb_Port.TabIndex = 12;
+            this.lb_Port.Text = "Port : ";
+            this.lb_Port.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // label1
+            // 
+            this.label1.BackColor = System.Drawing.Color.Gainsboro;
+            this.label1.Location = new System.Drawing.Point(-7, 43);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(591, 21);
+            this.label1.TabIndex = 13;
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // FormPuppetMaster
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.BackColor = System.Drawing.SystemColors.GrayText;
-            this.ClientSize = new System.Drawing.Size(581, 360);
+            this.ClientSize = new System.Drawing.Size(581, 368);
+            this.Controls.Add(this.label1);
             this.Controls.Add(this.tb_Port);
+            this.Controls.Add(this.lb_Port);
+            this.Controls.Add(this.tb_Command);
             this.Controls.Add(this.tb_InputPath);
             this.Controls.Add(this.lb_Script);
             this.Controls.Add(this.lb_separate);
@@ -189,17 +221,13 @@ namespace API {
         }
 
         private void submit_Click(object sender, System.EventArgs e) {
-            //Stream myStream = null;
-            //this.( this.tb_InputPath.Text);
-            puppetMaster.readFile(this.tb_InputPath.Text);
-
-            
+            puppetMaster.readFile(this.tb_InputPath.Text);            
         }  
 
         public void AddMsg(string s) { this.tb_Conversation.AppendText("\r\n" + s); } // Adiciona uma
         
-        private void button2_Click(object sender, System.EventArgs e) { 
-
+        private void submitCommand_Click(object sender, System.EventArgs e) {
+            puppetMaster.parse(this.tb_Command.Text);
         }
 
         private void openFileDialog(object sender, System.EventArgs e) {
@@ -217,6 +245,11 @@ namespace API {
         }
 
         private void FormChatClient_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void tb_Port_TextChanged(object sender, EventArgs e)
         {
 
         } // --------------------

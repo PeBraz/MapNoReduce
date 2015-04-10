@@ -9,6 +9,7 @@ using System.Runtime.Remoting.Channels.Tcp;
 using PADIMapNoReduce;
 using System.Threading;
 using System.IO;
+using System.Windows.Forms;
 
 
 namespace PADIMapNoReduce
@@ -37,6 +38,7 @@ namespace PADIMapNoReduce
         public PuppetMaster(int id)
         {
 
+
             TcpChannel channel = new TcpChannel(10000 + id);
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(PuppetMasterRemote), "PM", WellKnownObjectMode.Singleton);
@@ -47,8 +49,22 @@ namespace PADIMapNoReduce
             Console.ReadLine();
         }
 
+        public void readFile(string filename)
+        {
+            String[] lines = File.ReadAllLines(filename);
+            foreach (var line in lines)
+            {
+                parse(line.ToLower());
+            }
+        }
+
         public void parse(string line)
         {
+            if (line.Length == 0)
+            {
+                MessageBox.Show("Error: The command is empty");
+                return;
+            }
             String[] words = line.Split(' ');
             int size = words.Length - 1;
 
@@ -91,6 +107,8 @@ namespace PADIMapNoReduce
                 //unfreezec(int.Parse(words[1]));
             }
             else Console.WriteLine("erro");
+      
+            MessageBox.Show("Error: The command is incorrect");
         }
 
         public void readFile(string filename)
