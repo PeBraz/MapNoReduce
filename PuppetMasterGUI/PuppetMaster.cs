@@ -13,6 +13,7 @@ using System.Windows.Forms;
 using System.Collections;
 using System.Runtime.Serialization.Formatters;
 using System.Diagnostics;
+using System.Net.Sockets;
 
 namespace PADIMapNoReduce
 {
@@ -30,7 +31,7 @@ namespace PADIMapNoReduce
 
         void unfreezew(int id);
 
-        //void status();
+        void checkMachines();
     }
 
     class PuppetMaster
@@ -52,31 +53,14 @@ namespace PADIMapNoReduce
         public void readFile(string filename)
         {
             String[] lines = File.ReadAllLines(filename);
+
             foreach (var line in lines)
             {
                 parse(line);
             }
         }
 
-       /* //original code in
-        //http://stackoverflow.com/questions/15089026/c-sharp-visual-studio-tcp-channel-already-registered
-        //by Alex Filipovici
-        public TcpChannel newChannel(int tcpPort)
-        {
-            BinaryServerFormatterSinkProvider serverProv =
-                new BinaryServerFormatterSinkProvider();
-            serverProv.TypeFilterLevel = TypeFilterLevel.Full;
-            IDictionary propBag = new Hashtable();
-            propBag["port"] = tcpPort;
-            propBag["typeFilterLevel"] = TypeFilterLevel.Full;
-            propBag["name"] = Guid.NewGuid().ToString();
-            propBag["secure"] = true;
-            propBag["impersonate"] = false;
-         
-            return new TcpChannel(
-                propBag, null, serverProv);
-        }
-        */
+
 
         public void parse(string line)
         {
@@ -102,7 +86,7 @@ namespace PADIMapNoReduce
             }
             else if (cmd.Equals("status"))
             {
-                
+                this.me.checkMachines();
             }
             else if (cmd.Equals("sloww"))
             {
@@ -177,7 +161,8 @@ namespace PADIMapNoReduce
                 PuppetMaster.initClientProcess();
                 this.client = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + id).ToString() + "/C");
             }
-            client.newJob(targetWorker, inputFilePath, outputDir, numOfSplits, mapClass, mapDll);
+            //this call is blocking, call it in a thread to call other commands
+            new Thread(() => client.newJob(targetWorker, inputFilePath, outputDir, numOfSplits, mapClass, mapDll)).Start();
 
         }
 
@@ -190,7 +175,7 @@ namespace PADIMapNoReduce
         {
             IWorker w = getWorker(id);
             if (w != null)
-                w.delay(seconds);
+                new Thread(()=>w.delay(seconds)).Start();
             else
                 Console.WriteLine("Worker not found");
         
@@ -198,7 +183,7 @@ namespace PADIMapNoReduce
         public void freezew(int id) {
             IWorker w = getWorker(id);
             if (w != null)
-                w.freeze();
+               new Thread(()=> w.freeze()).Start();
             else
                 Console.WriteLine("Worker not found");
         }
@@ -206,7 +191,7 @@ namespace PADIMapNoReduce
         {
             IWorker w = getWorker(id);
             if (w != null)
-                w.unfreeze();
+                new Thread(()=>w.unfreeze()).Start();
             else
                 Console.WriteLine("Worker not found");
         }
@@ -219,6 +204,25 @@ namespace PADIMapNoReduce
             }
             return null;
         }
+        /** 
+         * Checks who is working and makes the tracker and workers print their status
+         */
+        public void checkMachines() 
+        {
+            String text = "";
+            foreach (KeyValuePair<int, IWorker> worker in workers)
+            {
+                try
+                {
+                    worker.Value.printStatus();
+                    text += worker.Key.ToString() + " - OK ";
+                }
+                catch (SocketException)
+                {
+                    text += worker.Key.ToString() + " - DOWN ";
+                }
 
+            }
+        }
     }
 }

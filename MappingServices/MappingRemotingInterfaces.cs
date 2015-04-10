@@ -27,7 +27,7 @@ namespace PADIMapNoReduce
     { 
        void startSplit(string map, string filename, WorkStruct? ws);
        void createMapper(byte[] code, String className);
-       string printStatus();
+       void printStatus();
        //void addDelay(int seconds);
        void freeze();
        void unfreeze();

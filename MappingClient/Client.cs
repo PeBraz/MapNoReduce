@@ -32,22 +32,7 @@ namespace PADIMapNoReduce
         {
             //string cmd = Console.ReadLine();
             new Client(int.Parse(args[0]));
-            /*
-            IClient me = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + 1).ToString() + "/C");
-            bool success = false;
-            do
-            {
-                success = me.newJob("tcp://localhost:30001/W", Client.path("illumhis.txt"), Client.path(@"Outputs\"), 1001, "Map", Client.path(@"Mapper\bin\Debug\Mapper.dll"));
-                if (!success)
-                    Console.WriteLine("Connection failed, retrying...");
 
-            } while (!success);
-
-            Console.WriteLine("<Success>");
-            Console.ReadLine();
-            //if (cmd.Equals("1")) 
-            //else if (cmd.Equals("2")) new Worker(2, "tcp://localhost:30002/W", "tcp://localhost:30001/W");
-            //else new Worker(3, "tcp://localhost:30003/W", "tcp://localhost:30001/W");*/
             System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
         }

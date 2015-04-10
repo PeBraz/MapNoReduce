@@ -9,9 +9,24 @@
 WORKER 1 tcp://localhost:20001/PM tcp://localhost:30001/W
 WORKER 2 tcp://localhost:20001/PM tcp://localhost:30002/W tcp://localhost:30001/W
 WORKER 3 tcp://localhost:20001/PM tcp://localhost:30003/W tcp://localhost:30001/W
-WORKER 4 tcp://localhost:20001/PM tcp://localhost:30004/W tcp://localhost:30001/W
-WORKER 5 tcp://localhost:20001/PM tcp://localhost:30005/W tcp://localhost:30001/W
+STATUS
 
 % submits a job
 SUBMIT tcp://localhost:30001/W H:\Documents\MapNoReduce\log.txt H:\Documents\MapNoReduce\Outputs\ 500 Map H:\Documents\MapNoReduce\Mapper\bin\Debug\Mapper.dll
+STATUS
 
+% make workers slow down
+WAIT 3
+SLOWW 3 3
+SLOWW 2 3
+SLOWW 1 3
+STATUS
+
+% make workers freeze
+FREEZEW 2
+WAIT 10
+UNFREEZEW 2
+STATUS
+
+WAIT 10 
+STATUS

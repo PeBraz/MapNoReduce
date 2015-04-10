@@ -103,11 +103,17 @@ namespace PADIMapNoReduce
         private IClient client;
         private IList<KeyValuePair<String, String>> map;
         private Map mapObj;
-      //  private int delay = 0;
 
+        private const string STATUS_IDLE = "idle";
+        private const string STATUS_WORK = "working";
+        private const string STATUS_BLOCKED = "blocked";
+
+
+        public string status;
 
         private Object delayLock = new Object();
-
+        private Object freezeLock = new Object();
+        private bool frozen;
         private int id;
 
 
@@ -115,8 +121,8 @@ namespace PADIMapNoReduce
         {
             this.id = Worker.getId();
             client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:10001/C"));
-           // slaves.Add(new KeyValuePair<int, IWorker>(id, this));   //add myself
             slaves.Add(new KeyValuePair<int, IWorker>(id, (IWorker)Activator.GetObject(typeof(IWorker), Worker.getUrl())));
+            this.setStatus(STATUS_IDLE);
         }
 
         public void keepWorkingThread(string map, string filename, WorkStruct? job)
@@ -124,11 +130,11 @@ namespace PADIMapNoReduce
             ISet<KeyValuePair<String, String>> megaList = new HashSet<KeyValuePair<String, String>>();
             String[] splits;
             IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:30001/W");
-
+            this.setStatus(STATUS_WORK);
 
             while (job != null)
             {
-           
+            
       
                 megaList.Clear();
                 splits = client.getSplit(job.Value.lower, job.Value.higher);
@@ -141,6 +147,10 @@ namespace PADIMapNoReduce
 
 
                 lock (delayLock) {  };
+
+                while (frozen) {
+                    Thread.Sleep(100);
+                } 
                 
              
                 Console.WriteLine("Did: " + job.Value.id);
@@ -149,29 +159,42 @@ namespace PADIMapNoReduce
 
 
             }
-            tracker.join(); // when no more jobs at tracker
+
+            tracker.join(); 
+            this.setStatus(STATUS_IDLE);
         }
 
-
-
-        public string printStatus()
+        public void setStatus(string status) 
         {
-            return "alive";
+            this.status = status;
+        }
+
+        public void printStatus()
+        {
+            Console.WriteLine(String.Format("[{0} - {1}]\t{2}", this.id, Worker.getUrl(), this.status));
         }
 
         public void delay(int seconds)
         {
-            Console.WriteLine("Pausing thread execution for: " + seconds.ToString() + " seconds.");
-            lock (delayLock) { Thread.Sleep(seconds * 1000); }
+
+            lock (delayLock) {
+                this.setStatus(STATUS_BLOCKED);
+                Thread.Sleep(seconds * 1000); 
+            }
+            this.setStatus(STATUS_WORK);
         }
+
 
         public void freeze() 
         {
-            Monitor.Enter(delayLock);
+            frozen = true;
+            this.setStatus(STATUS_BLOCKED);
         }
+
         public void unfreeze() 
         {
-            Monitor.Exit(delayLock);
+            frozen = false;
+            this.setStatus(STATUS_WORK);
         }
 
 
