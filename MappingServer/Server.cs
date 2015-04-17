@@ -86,6 +86,8 @@ namespace PADIMapNoReduce
         //public static delegate ISet<KeyValuePair<String, String>> mapDelegate(HashSet<KeyValuePair<String, String>> fun);
         private Type type;
         private object classObj;
+        private string methodName =  "Map";
+
         public Map(Type type) {
             this.classObj = Activator.CreateInstance(type);
             this.type = type;
@@ -94,7 +96,7 @@ namespace PADIMapNoReduce
         public ISet<KeyValuePair<String, String>> map(string fileLine) {
             object[] args = new object[] { fileLine };
             return (ISet<KeyValuePair<String, String>>)
-                    this.type.InvokeMember("map", BindingFlags.Default | BindingFlags.InvokeMethod, null, this.classObj, args);
+                    this.type.InvokeMember(methodName, BindingFlags.Default | BindingFlags.InvokeMethod, null, this.classObj, args);
         }
     }
 

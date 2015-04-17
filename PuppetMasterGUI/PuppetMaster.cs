@@ -125,7 +125,7 @@ namespace PADIMapNoReduce
         public static void initClientProcess() 
         {
             ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.FileName = @"..\..\..\MappingClient\bin\Debug\Client.exe";
+            startInfo.FileName = @"Client.exe";
             startInfo.Arguments = "1";
             Process.Start(startInfo);
         }
@@ -133,7 +133,7 @@ namespace PADIMapNoReduce
         public static void initWorkerProcess(int id, string url, string trackerUrl)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.FileName = @"..\..\..\MappingServer\bin\Debug\ChatServer.exe";
+            startInfo.FileName = @"ChatServer.exe";
             startInfo.Arguments = id.ToString() + " " + url + " " + (trackerUrl!=null ? trackerUrl : "");
             Process.Start(startInfo);
         }

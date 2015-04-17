@@ -12,7 +12,7 @@ WORKER 3 tcp://localhost:20001/PM tcp://localhost:30003/W tcp://localhost:30001/
 STATUS
 
 % submits a job
-SUBMIT tcp://localhost:30001/W H:\Documents\MapNoReduce\log.txt H:\Documents\MapNoReduce\Outputs\ 500 Map H:\Documents\MapNoReduce\Mapper\bin\Debug\Mapper.dll
+SUBMIT tcp://localhost:30001/W ..\log.txt Outputs\ 500 Mapper ..\Mapper\bin\Debug\Mapper.dll
 STATUS
 
 % make workers slow down

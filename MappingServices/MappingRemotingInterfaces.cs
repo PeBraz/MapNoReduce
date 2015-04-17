@@ -5,8 +5,8 @@ using System.Collections.Generic;
 namespace PADIMapNoReduce
 {
 
-    public interface IMap {
-        ISet<KeyValuePair<String, String>> map(String fileLine);
+    public interface IMapper {
+        ISet<KeyValuePair<String, String>> Map(String fileLine);
     }
 
     public interface IClient 

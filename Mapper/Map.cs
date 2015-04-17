@@ -7,9 +7,9 @@ using PADIMapNoReduce;
 
 namespace Mapper
 {
-    public class Map : IMap 
+    public class Mapper : IMapper 
     {
-        public ISet<KeyValuePair<string, string>> map(string fileLine)
+        public ISet<KeyValuePair<string, string>> Map(string fileLine)
         {
             ISet<KeyValuePair<string, string>> result = new HashSet<KeyValuePair<string, string>>();
             result.Add(new KeyValuePair<string, string>("Key", fileLine));
