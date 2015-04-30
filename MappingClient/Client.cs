@@ -32,9 +32,14 @@ namespace PADIMapNoReduce
         [STAThread]
         static void Main(string[] args)
         {
-            //string cmd = Console.ReadLine();
-            new Client(int.Parse(args[0]));
-
+            if (args.Length > 0)
+                new Client(int.Parse(args[0]));
+            else 
+            {
+                Console.Write("id >>  ");
+                new Client(int.Parse(Console.ReadLine().Trim()));
+            }
+            //Console.WriteLine("Started client with id " + args[0]);
             System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
         }

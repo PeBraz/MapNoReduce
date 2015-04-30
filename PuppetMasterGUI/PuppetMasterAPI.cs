@@ -29,10 +29,9 @@ namespace API {
         private Label lb_id;
         private Label label1;
 
-        private PuppetMaster me;
         private Button bt_id;
 
-        private static PuppetMaster puppetMaster = null;
+        private  PuppetMaster me = null;
         public FormPuppetMaster() {
             InitializeComponent();
         }
@@ -250,7 +249,8 @@ namespace API {
         public void AddMsg(string s) { this.tb_Conversation.AppendText("\r\n" + s); } // Adiciona uma
         
         private void submitCommand_Click(object sender, System.EventArgs e) {
-            puppetMaster.parse(this.tb_Command.Text);
+            me.parse(this.tb_Command.Text);
+            this.tb_Command.Text = "";
         }
 
         private void openFileDialog(object sender, System.EventArgs e) {
@@ -287,8 +287,8 @@ namespace API {
                 MessageBox.Show("No id given");
                 return;
             }
-
-            this.me = new PuppetMaster(int.Parse(pmId));  //local instance
+            if (this.me == null)
+                this.me = new PuppetMaster(int.Parse(pmId));  //local instance
         }
 
     }
