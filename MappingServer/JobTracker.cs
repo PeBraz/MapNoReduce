@@ -75,10 +75,9 @@ namespace PADIMapNoReduce
 
             Task[] tasks = new Task[numSplits]; 
 
-            for (int i = 0, index = 0; i < numSplits; i++, index += step + ((remainder > 0) ? 1 : 0))
+            for (int i = 0, index = 0; i < numSplits; i++, index += step + ((remainder > 0) ? 1 : 0), remainder--)
             {
                 tasks[i] = new Task(index, index + step + ((remainder > 0) ? 1 : 0), i, jobId);
-                remainder--;
             }
 
             Job job = new Job(map, tasks, jobId);

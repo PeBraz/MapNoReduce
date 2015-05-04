@@ -127,7 +127,7 @@ namespace PADIMapNoReduce
 
         private Object delayLock = new Object();
         private Object freezeLock = new Object();
-        private bool frozen;
+        private bool frozen = false;
         private int id;
 
         private Queue<Task> queue; 
@@ -163,7 +163,6 @@ namespace PADIMapNoReduce
             if (nullMapper == null) return;
             Map mapper = nullMapper.Value.Value;
 
-            Console.WriteLine("Starting tasks; " + tasks.Length + " to do.");
             while (true){
                 
                 Task? task = this.getTask(); 
@@ -189,10 +188,9 @@ namespace PADIMapNoReduce
                 Console.WriteLine("Did: " + task.Value.id);
                 this.storeTask(task.Value);
                 client.storeSplit(megaList, task.Value.id);
-
+                megaList.Clear();
             }
 
-            Console.WriteLine("Ended now, going to steal");
             this.freeMapper(map); //free mapper after all tasks done
             tracker.finish(); 
             this.setStatus(STATUS_IDLE);
