@@ -14,7 +14,7 @@ namespace PADIMapNoReduce
 {
     public class Client
     {
-        private IClient me;
+        public static IClient me;
         public static string trackerUrl;
         public Client(int id)
         {
@@ -23,11 +23,16 @@ namespace PADIMapNoReduce
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(ClientRemote), "C", WellKnownObjectMode.Singleton);
 
+            Client.me = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + id).ToString() + "/C");
+
         }
 
-        public void init(int trackerId){
-            Client.trackerUrl = "tcp://localhost:" +(30000+trackerId).ToString()+"/W";
+        public void init(int trackerId) 
+        {
+            Client.trackerUrl = "tcp://localhost:" + (10000 + trackerId).ToString() + "/W";
+        
         }
+
 
         [STAThread]
         static void Main(string[] args)
@@ -36,18 +41,27 @@ namespace PADIMapNoReduce
                 new Client(int.Parse(args[0]));
             else 
             {
-                Console.Write("id >>  ");
+                Console.Write("Pick my id >>  ");
                 new Client(int.Parse(Console.ReadLine().Trim()));
+
+                while (true)
+                {
+                    Console.WriteLine("Choose a worker port to start a test job: ");
+
+                    Client.me.newJob("tcp://localhost:" + Console.ReadLine().Trim() + "/W",
+                                    "../log.txt",
+                                    "Outputs/",
+                                    20,
+                                    "Mapper",
+                                    "Mapper.dll");
+
+                }
+
             }
-            //Console.WriteLine("Started client with id " + args[0]);
             System.Console.WriteLine("Press <enter> to terminate...");
             System.Console.ReadLine();
         }
         
-        public static string path(string file)
-        {
-            return @"..\..\..\" + file;
-        }
 
     }
 

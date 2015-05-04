@@ -78,7 +78,7 @@ namespace PADIMapNoReduce
             else{
 
                 Console.WriteLine("No arguments given. Starting in command line mode");
-                Console.Write("[id] [port] [tracker-port] >>   ");
+                Console.Write("[id] [my-port-id 0-9999] [tracker-port-id 0-9999] >>   ");
                 string[] cmd = Console.ReadLine().Trim().Split();
 
 
@@ -163,7 +163,7 @@ namespace PADIMapNoReduce
             if (nullMapper == null) return;
             Map mapper = nullMapper.Value.Value;
 
-
+            Console.WriteLine("Starting tasks; " + tasks.Length + " to do.");
             while (true){
                 
                 Task? task = this.getTask(); 
@@ -191,6 +191,8 @@ namespace PADIMapNoReduce
                 client.storeSplit(megaList, task.Value.id);
 
             }
+
+            Console.WriteLine("Ended now, going to steal");
             this.freeMapper(map); //free mapper after all tasks done
             tracker.finish(); 
             this.setStatus(STATUS_IDLE);

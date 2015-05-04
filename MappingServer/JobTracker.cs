@@ -56,14 +56,11 @@ namespace PADIMapNoReduce
     {
         private int done = 0;   //temporary used by join() to signal worker has no more work to do
         private List<KeyValuePair<int, IWorker>> slaves = new List<KeyValuePair<int, IWorker>>();
-        private List<Job> steve;
+        private List<Job> steve = new List<Job>();
 
         private const int HEARTBEAT_INTERVAL = 100;
 
         /**
-         * 
-         * 
-         * 
          *  map is the name of the Imapper instance to be used in the worker nodes,
          */ 
         public void submitJob(string map, string filename, int numSplits, int numberOfLines)
@@ -89,16 +86,16 @@ namespace PADIMapNoReduce
 
 
             int j = 0;
-            int left = numSplits / numSlaves + numSlaves % numSlaves; 
-
+            step = numSplits / numSlaves;
+            remainder = numSplits % numSlaves;
             foreach (KeyValuePair<int, IWorker> slave in slaves)
             {
 
-                Task[] task = new Task[left];
-                Array.Copy(tasks, j, task, 0, left);
+                Task[] task = new Task[step + ((remainder > 0) ? 1 : 0)];
+                Array.Copy(tasks, j, task, 0, step + ((remainder > 0) ? 1 : 0));
+                remainder--;
 
-                j += left;
-                left -= left;
+                j += step;
 
                 try
                 {
