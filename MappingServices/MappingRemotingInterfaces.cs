@@ -18,20 +18,29 @@ namespace PADIMapNoReduce
     public interface IJobTracker
     { 
         void submitJob(string map, string filename, int numSplits, int numberOfLines);
-        //WorkStruct? hazWorkz(); 
         void SendMapper(byte[] code, String className);
-        string finish();
+        string finish(int jobId);
        
-        void connect(int id, string url);
     }
+
+
+    public interface INetwork
+    {
+        IDictionary<int,string> join(int id, string ip);
+        void start(string bootIp);
+        void addNode(int id, string ip);
+        void heartbeat();
+    }
+
+
     public interface IWorker 
-    { 
+    {
+
        void startSplit(string map, string filename, Task[] ws);
 
        void createMapper(byte[] code, String className);
        // after the job is done the mapper used can be deleted
        void freeMapper(String className);
-       KeyValuePair<int, int>[] heartbeat();
        void printStatus();
        //void addDelay(int seconds);
        void freeze();
@@ -45,13 +54,17 @@ namespace PADIMapNoReduce
         public int higher;
         public int id;
         public int jobId;
+        public string map;
+        public string trackerUrl;
 
-        public Task(int lower, int higher, int id, int jobId)
+        public Task(int lower, int higher, int id, int jobId, string map, string trackerUrl)
         {
             this.lower = lower;
             this.id = id;
             this.higher = higher;
             this.jobId = jobId;
+            this.map = map;
+            this.trackerUrl = trackerUrl;
         }
             
 

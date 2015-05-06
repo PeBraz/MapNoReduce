@@ -18,13 +18,25 @@ namespace PADIMapNoReduce
         public static int id;
         public static bool amMaster = false;
         private static string url;
+        private static string bootIp;
 
-        public Worker(int id, string url, string trackerUrl) 
+        public Worker(int id, string url, string bootIp) 
         {
+            // Static Worker variables for Remote Service initialization
             Worker.id = id;
             Worker.url = url;
-            this.start(trackerUrl);
+            Worker.bootIp = bootIp;
+
+            TcpChannel channel = new TcpChannel(getPort());
+            ChannelServices.RegisterChannel(channel, false);
+            RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "W", WellKnownObjectMode.Singleton);
+
+            ((INetwork)Activator.GetObject(typeof(WorkRemote), Worker.getUrl())).start(Worker.bootIp);
+
+            Console.WriteLine("Started on: " + getUrl());
         }
+
+        
 
         private int getPort()
         {
@@ -33,35 +45,16 @@ namespace PADIMapNoReduce
         public static int getId(){
             return Worker.id;
         }
+        public static string getBootstrapIp() 
+        {
+            return Worker.bootIp;
+        }
+
         public static string getUrl() 
         {
             return Worker.url;
         }
-        private void start(string entryUrl)
-        {
-            TcpChannel channel = new TcpChannel(getPort());
-            ChannelServices.RegisterChannel(channel, false);
-            RemotingConfiguration.RegisterWellKnownServiceType(typeof(WorkRemote), "W", WellKnownObjectMode.Singleton);
-           
-            try
-            {
-                if (entryUrl == null)
-                {
-                    Worker.amMaster = true;
-                    Console.WriteLine("I am Master at 30001");
-                }
-                else {
-                    Console.WriteLine(entryUrl);
-                    ((IJobTracker)Activator.GetObject(typeof(IJobTracker), entryUrl)).connect(getId(),getUrl());
-                    Console.WriteLine("Listening on: "+ getUrl()); ;
-                }
-            }
-            catch (SocketException)
-            {
-                Console.Write("Failed to start on url: " + url);
-                System.Environment.Exit(1);
-            }
-        }
+
 
 
         [STAThread]
@@ -112,7 +105,7 @@ namespace PADIMapNoReduce
         }
     }
 
-    partial class WorkRemote : MarshalByRefObject, IWorker, IJobTracker
+    partial class WorkRemote : MarshalByRefObject, IWorker, IJobTracker, INetwork
     {
         private IClient client;
         //private IList<KeyValuePair<String, String>> map;
@@ -122,6 +115,9 @@ namespace PADIMapNoReduce
         private const string STATUS_WORK = "working";
         private const string STATUS_BLOCKED = "blocked";
 
+        //Counter to know how many tasks have been completed by this worker for each job,
+        // (stolen tasks are not counted)
+        private IDictionary<int, int> taskCounter = new Dictionary<int, int>();
 
         public string status;
 
@@ -129,87 +125,82 @@ namespace PADIMapNoReduce
         private Object freezeLock = new Object();
         private bool frozen = false;
         private int id;
+        private string url;
+        private Queue<Task> queue = new Queue<Task>();
 
-        private Queue<Task> queue; 
-        private IList<KeyValuePair<int,int>> tasksDone;
-        private IList<KeyValuePair<string, Map>> myMaps;
+        private IDictionary<string, Map> myMaps = new Dictionary<string,Map>();
 
         public WorkRemote()
         {
             this.id = Worker.getId();
+            this.url = Worker.getUrl();
+            Console.WriteLine("Initializing: " + Worker.getBootstrapIp());
             client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:10001/C"));
-            slaves.Add(new KeyValuePair<int, IWorker>(id, (IWorker)Activator.GetObject(typeof(IWorker), Worker.getUrl())));
             this.setStatus(STATUS_IDLE);
-            this.queue = new Queue<Task>();
-            this.tasksDone = new List<KeyValuePair<int,int>>();
-            this.myMaps = new List<KeyValuePair<string,Map>>();
+
+            new Thread(() => mainThread()).Start();
         }
         
-        /*
-         * This thread will be created each time this worker is assigned  a group of tasks, change it
-         * If there is a thread doing the job then use that one
-         * The queue should be unique for all the tasks (from different jobs) being performed in the worker, 
-         * there should be a way to correspond a task to a certain job (jobId?) to know which mapper to use
-         */
-        public void workingThread(string map, string filename, Task[] tasks)
+
+
+        public void mainThread() 
         {
-            ISet<KeyValuePair<String, String>> megaList = new HashSet<KeyValuePair<String, String>>();
-            IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), "tcp://localhost:30001/W");
+            ISet<KeyValuePair<String, String>> taskOutputs = new HashSet<KeyValuePair<String, String>>();
 
-            this.setStatus(STATUS_WORK);
-            this.storeTasks(tasks);
-
-            KeyValuePair<string, Map>? nullMapper = this.getMap(map);
-            if (nullMapper == null) return;
-            Map mapper = nullMapper.Value.Value;
-
-            while (true){
-                
-                Task? task = this.getTask(); 
-                if (task == null) break;
-          
-                
-                String[] splits = client.getSplit(task.Value.lower, task.Value.higher);
-                if (splits == null) break;
-
-                foreach (String s in splits)
-                {
-                    megaList.UnionWith(mapper.map(s));
-                }
-
-                lock (delayLock) { };
-
-                while (frozen)
-                {
-                    Thread.Sleep(100);
-                }
-
-
-                Console.WriteLine("Did: " + task.Value.id);
-                this.storeTask(task.Value);
-                client.storeSplit(megaList, task.Value.id);
-                megaList.Clear();
-            }
-
-            this.freeMapper(map); //free mapper after all tasks done
-            tracker.finish(); 
-            this.setStatus(STATUS_IDLE);
-        }
-
-        /**
-         *  Thread calls this when a task was completed
-         */
-        private void storeTask(Task task) 
-        {
-            lock (this.tasksDone)
+            while (true) 
             {
-                this.tasksDone.Add(new KeyValuePair<int,int>(task.jobId,task.id));
+
+                while (true)
+                {
+
+                    Task? task = this.getTask();
+                    if (task == null) break;
+                    this.setStatus(STATUS_WORK);
+
+                    String[] splits = client.getSplit(task.Value.lower, task.Value.higher);
+                    if (splits == null) break;
+
+
+
+                    foreach (String s in splits)
+                    {
+                        taskOutputs.UnionWith(myMaps[task.Value.map].map(s));
+                    }
+
+                    lock (delayLock) { };
+
+                    while (frozen)
+                    {
+                        Thread.Sleep(100);
+                    }
+
+
+                    Console.WriteLine("Did: " + task.Value.id);
+                    client.storeSplit(taskOutputs, task.Value.id);
+                    taskOutputs.Clear();
+
+
+                    //This supposes that no tasks were stolen from the worker
+                    //If a task is stolen then the counter must go down
+                    if (--taskCounter[task.Value.jobId] <= 0)
+                    {
+                        IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(WorkRemote), task.Value.trackerUrl);
+                        new Thread(() => tracker.finish(task.Value.jobId)).Start();
+                    }
+                } 
+                this.setStatus(STATUS_IDLE);
+                Thread.Sleep(100);  //sleep while no jobs in queue
+
             }
+                
         }
+
+
+      
         /**
          *  Job tracker asks for tasks that were completed
          */
-        public KeyValuePair<int,int>[] heartbeat() 
+        /**public KeyValuePair<int,int>[] heartbeat() 
         {
             lock (this.tasksDone) 
             {
@@ -218,11 +209,13 @@ namespace PADIMapNoReduce
                 this.tasksDone.Clear();
                 return arr;
             }
-        }
+        }*/
 
 
         private void storeTasks(Task[] tasks) 
         {
+            this.taskCounter[tasks[0].jobId] = tasks.Length;
+
             lock(this.queue){
                 foreach(Task task in tasks)
                 {
@@ -277,7 +270,7 @@ namespace PADIMapNoReduce
 
         public void startSplit(string map, string filename, Task[] tasks)
         {
-            new Thread(() => workingThread(map, filename, tasks)).Start();
+            new Thread(() => storeTasks(tasks)).Start();
         }
 
         public void createMapper(byte[] code, string className)
@@ -290,7 +283,7 @@ namespace PADIMapNoReduce
                     if (type.FullName.EndsWith("." + className))
                     {
                         //doesn't check duplicates
-                        this.myMaps.Add(new KeyValuePair<string, Map>(className, new Map(type)));
+                        this.myMaps[className] = new Map(type);
                     }
                 }
             }

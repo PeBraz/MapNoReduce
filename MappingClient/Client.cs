@@ -29,7 +29,7 @@ namespace PADIMapNoReduce
 
         public void init(int trackerId) 
         {
-            Client.trackerUrl = "tcp://localhost:" + (10000 + trackerId).ToString() + "/W";
+            Client.trackerUrl = "tcp://localhost:" + (30000 + trackerId).ToString() + "/W";
         
         }
 
@@ -46,7 +46,7 @@ namespace PADIMapNoReduce
 
                 while (true)
                 {
-                    Console.WriteLine("Choose a worker port to start a test job: ");
+                    Console.WriteLine("Choose a worker port to start a test job [ex: 30001]: ");
 
                     Client.me.newJob("tcp://localhost:" + Console.ReadLine().Trim() + "/W",
                                     "../log.txt",
@@ -77,6 +77,15 @@ namespace PADIMapNoReduce
             ClientRemote.lines = File.ReadAllLines(filename);
             return ClientRemote.numberOfFileLines();
         }
+
+
+        /*
+         *  The Client does not know which file the split belongs to 
+         * 
+         * 
+         * 
+         */
+
 
         public String[] getSplit(int lower, int higher)
         {

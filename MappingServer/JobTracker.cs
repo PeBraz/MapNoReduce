@@ -18,27 +18,29 @@ namespace PADIMapNoReduce
         private int id;
         private string map;
         private Task[] tasks;
-        private ISet<int> finishedTasks = new HashSet<int>();
+        private int workersDone;
 
-        public Job(string map, Task[] tasks, int id) 
+        public Job(string map, Task[] tasks, int id, int startingWorkers)
         {
             this.map = map;
             this.tasks = tasks;
             this.id = id;
+            this.workersDone = startingWorkers;
         }
 
-
-        public void finished(int taskId)
+        public void workerFinished() 
         {
-            lock (this)
-            {
-                this.finishedTasks.Add(taskId);
-            }
+            this.workersDone -= 1;
         }
+
+        /*
+         * A job is finished when all the workers doing the tasks return
+         */
+
         public bool isFinished() 
         {
             lock(this){
-                return this.tasks.Length == this.finishedTasks.Count; 
+                return this.workersDone == 0; 
             }
        }
 
@@ -55,21 +57,15 @@ namespace PADIMapNoReduce
     partial class WorkRemote
     {
         private int done = 0;   //temporary used by join() to signal worker has no more work to do
-        private List<KeyValuePair<int, IWorker>> slaves = new List<KeyValuePair<int, IWorker>>();
-        private List<Job> steve = new List<Job>();
+        private IDictionary<int, Job> steve = new Dictionary<int, Job>();
 
-        private const int HEARTBEAT_INTERVAL = 100;
 
-        /**
-         *  map is the name of the Imapper instance to be used in the worker nodes,
-         */ 
         public void submitJob(string map, string filename, int numSplits, int numberOfLines)
         {
             Console.WriteLine("Request for file: " + filename);
 
             int jobId = new Random().Next();
 
-            int numSlaves = this.slaves.Count;  //need to check if all slaves are alive
             int step = numberOfLines / numSplits;
             int remainder = numberOfLines % numSplits;
 
@@ -77,37 +73,39 @@ namespace PADIMapNoReduce
 
             for (int i = 0, index = 0; i < numSplits; i++, index += step + ((remainder > 0) ? 1 : 0), remainder--)
             {
-                tasks[i] = new Task(index, index + step + ((remainder > 0) ? 1 : 0), i, jobId);
+                tasks[i] = new Task(index, index + step + ((remainder > 0) ? 1 : 0), i, jobId, map, this.url);
             }
 
-            Job job = new Job(map, tasks, jobId);
-            steve.Add(job);
-
-
+       
+           
+            IList<IWorker> workers = this.getWorkers();
+            int numWorkers = workers.Count;  //need to check if all slaves are alive
+            steve[jobId] = new Job(map, tasks, jobId, numWorkers);
             int j = 0;
-            step = numSplits / numSlaves;
-            remainder = numSplits % numSlaves;
-            foreach (KeyValuePair<int, IWorker> slave in slaves)
+            step = numSplits / numWorkers;
+            remainder = numSplits % numWorkers;
+
+            foreach (IWorker worker in workers)
             {
 
                 Task[] task = new Task[step + ((remainder > 0) ? 1 : 0)];
                 Array.Copy(tasks, j, task, 0, step + ((remainder > 0) ? 1 : 0));
+         
+                j += step + ((remainder > 0) ? 1 : 0);
                 remainder--;
-
-                j += step;
 
                 try
                 {
-                    slave.Value.startSplit(map, filename, task);
+                    worker.startSplit(map, filename, task);
                 }
                 catch (SocketException) 
                 {
-                    Console.WriteLine("Node died: " + slave.Key);
+                    Console.WriteLine("A worker died");
                 }
             }
 
 
-            while (!job.isFinished())
+            while (!steve[jobId].isFinished())
             {
                Thread.Sleep(1000);
             }
@@ -119,64 +117,29 @@ namespace PADIMapNoReduce
          */
         public void SendMapper(byte[] code, String className)
         {
-            foreach (KeyValuePair<int, IWorker> slave in slaves)
-                slave.Value.createMapper(code, className);
+            foreach (IWorker worker in this.getWorkers())
+                worker.createMapper(code, className);
         }
 
-
-
-        public void heartbeatThread() 
+        /**
+         *  After a worker did all the jobs, it notifies the job tracker that he is available
+         * 
+         */
+        public string finish(int jobId) 
         {
-            while (true)
-            {
-                Thread.Sleep(HEARTBEAT_INTERVAL);
-                  
-                List<KeyValuePair<int,IWorker>> downSlaves = new List<KeyValuePair<int, IWorker>>();
+            steve[jobId].workerFinished();
 
-                KeyValuePair<int, int>[] tasks;
-                foreach (KeyValuePair<int,IWorker> slave in this.slaves)
-                {
-                    try
-                    {
-                        tasks = slave.Value.heartbeat();
-                        //do somethin about state of the job
-                    }
-                    catch (SocketException)
-                    {
-                        downSlaves.Add(slave);  
-                    }
-                }
-                foreach (KeyValuePair<int, IWorker> slave in downSlaves) 
-                {
-                    this.slaves.Remove(slave);
-                }
-                downSlaves.Clear();
-            }
-        
-        
-        }
-
-
-        public string finish() 
-        {
             //when a worker is done, it is ready to accept jobs from stragglers
             //should return the address of a straggler worker
+
+
             return null;
-        }
-
-
-        public void connect(int id, string url) 
-        { 
-            if (!this.amMaster()) return;
-
-            IWorker worker = (IWorker)Activator.GetObject(typeof(IWorker), url);
-            slaves.Add(new KeyValuePair<int, IWorker>(id, worker));
         }
 
 
         private Job getJob(int id) 
         {
-            foreach (Job job in steve) 
+            foreach (Job job in steve.Values) 
             {
                 if (job.Id == id)
                     return job;

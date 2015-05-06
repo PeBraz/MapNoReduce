@@ -97,6 +97,7 @@
   <ItemGroup>
     <Content Include="App.ico" />
     <Compile Include="JobTracker.cs" />
+    <Compile Include="Network.cs" />
     <Compile Include="Server.cs">
       <SubType>Code</SubType>
     </Compile>
