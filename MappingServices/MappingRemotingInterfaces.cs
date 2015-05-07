@@ -11,15 +11,15 @@ namespace PADIMapNoReduce
 
     public interface IClient 
     {
-        string[] getSplit(int lower, int higher);
-        void storeSplit(ISet<KeyValuePair<String, String>> set, int id);
+        string[] getSplit(string filename, int lower, int higher);
+        void storeSplit(string filename, ISet<KeyValuePair<String, String>> set, int id);
         bool newJob(string trackerUrl, string inputFilePath, string outputDir, int numOfSplits, string mapClass, string mapDll);
     }
     public interface IJobTracker
     { 
-        void submitJob(string map, string filename, int numSplits, int numberOfLines);
-        void SendMapper(byte[] code, String className);
+        void submitJob(int jobId, int numSplits);
         string finish(int jobId);
+        int sendMeta(string clientAddr, string filename, int filesize, string map, byte[] code);
        
     }
 
@@ -36,9 +36,8 @@ namespace PADIMapNoReduce
     public interface IWorker 
     {
 
-       void startSplit(string map, string filename, Task[] ws);
-
-       void createMapper(byte[] code, String className);
+       void startSplit(Task[] batch);
+       void createMeta(JobMeta meta);
        // after the job is done the mapper used can be deleted
        void freeMapper(String className);
        void printStatus();
@@ -54,20 +53,39 @@ namespace PADIMapNoReduce
         public int higher;
         public int id;
         public int jobId;
-        public string map;
-        public string trackerUrl;
 
-        public Task(int lower, int higher, int id, int jobId, string map, string trackerUrl)
+        public Task(int lower, int higher, int id, int jobId)
         {
             this.lower = lower;
             this.id = id;
             this.higher = higher;
             this.jobId = jobId;
-            this.map = map;
-            this.trackerUrl = trackerUrl;
         }
             
 
     }
- 
+
+    [Serializable]
+    public struct JobMeta
+    {
+        public int jobId;
+        public string clientAddr;
+        public string trackerAddr;
+        public string filename;
+        public string map;
+        public byte[] code;
+
+        public JobMeta (int jobId, string clientAddr, string trackerAddr, string filename, string map, byte[] code)
+        {
+            this.jobId = jobId;
+            this.clientAddr = clientAddr;
+            this.trackerAddr = trackerAddr;
+            this.filename = filename;
+            this.map = map;
+            this.code = code;
+        }
+
+
+    }
+    
 }

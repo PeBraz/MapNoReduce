@@ -129,6 +129,7 @@ namespace PADIMapNoReduce
         private Queue<Task> queue = new Queue<Task>();
 
         private IDictionary<string, Map> myMaps = new Dictionary<string,Map>();
+        private IDictionary<int, JobMeta> metas = new Dictionary<int, JobMeta>();
 
         public WorkRemote()
         {
@@ -146,6 +147,8 @@ namespace PADIMapNoReduce
         public void mainThread() 
         {
             ISet<KeyValuePair<String, String>> taskOutputs = new HashSet<KeyValuePair<String, String>>();
+            IClient client = null;
+ 
 
             while (true) 
             {
@@ -157,14 +160,17 @@ namespace PADIMapNoReduce
                     if (task == null) break;
                     this.setStatus(STATUS_WORK);
 
-                    String[] splits = client.getSplit(task.Value.lower, task.Value.higher);
+                    JobMeta meta = metas[task.Value.jobId];
+                    client = ((IClient)Activator.GetObject(typeof(IClient), meta.clientAddr));
+
+                    String[] splits = client.getSplit(meta.filename, task.Value.lower, task.Value.higher);
                     if (splits == null) break;
 
 
-
+                    Map map = myMaps[meta.map];
                     foreach (String s in splits)
                     {
-                        taskOutputs.UnionWith(myMaps[task.Value.map].map(s));
+                        taskOutputs.UnionWith(map.map(s));
                     }
 
                     lock (delayLock) { };
@@ -176,7 +182,7 @@ namespace PADIMapNoReduce
 
 
                     Console.WriteLine("Did: " + task.Value.id);
-                    client.storeSplit(taskOutputs, task.Value.id);
+                    client.storeSplit(meta.filename, taskOutputs, task.Value.id);
                     taskOutputs.Clear();
 
 
@@ -184,7 +190,7 @@ namespace PADIMapNoReduce
                     //If a task is stolen then the counter must go down
                     if (--taskCounter[task.Value.jobId] <= 0)
                     {
-                        IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(WorkRemote), task.Value.trackerUrl);
+                        IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(WorkRemote), meta.trackerAddr);
                         new Thread(() => tracker.finish(task.Value.jobId)).Start();
                     }
                 } 
@@ -268,12 +274,12 @@ namespace PADIMapNoReduce
         }
 
 
-        public void startSplit(string map, string filename, Task[] tasks)
+        public void startSplit(Task[] tasks)
         {
             new Thread(() => storeTasks(tasks)).Start();
         }
 
-        public void createMapper(byte[] code, string className)
+        public Map createMapper(byte[] code, string className)
         {
             Assembly assembly = Assembly.Load(code);
             foreach (Type type in assembly.GetTypes())
@@ -282,11 +288,17 @@ namespace PADIMapNoReduce
                 {
                     if (type.FullName.EndsWith("." + className))
                     {
-                        //doesn't check duplicates
-                        this.myMaps[className] = new Map(type);
+                        return new Map(type);
                     }
                 }
             }
+            return null;
+        }
+
+        public void createMeta(JobMeta meta) 
+        {
+            this.metas[meta.jobId] =  meta;
+            this.myMaps[meta.map] = createMapper(meta.code, meta.map);
         }
 
         /*

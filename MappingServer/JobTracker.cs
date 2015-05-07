@@ -16,21 +16,52 @@ namespace PADIMapNoReduce
     {
 
         private int id;
-        private string map;
         private Task[] tasks;
-        private int workersDone;
+        private int batchesCount; //number of batches required for the job to be completed
+        private int fileLines;
+        private JobMeta meta;
 
-        public Job(string map, Task[] tasks, int id, int startingWorkers)
+
+        public Job(string client, string tracker , string filename, int fileLines, string map, byte[] code)
         {
-            this.map = map;
-            this.tasks = tasks;
-            this.id = id;
-            this.workersDone = startingWorkers;
+            this.id = new Random().Next();
+            this.fileLines = fileLines;
+            this.meta = new JobMeta(this.id, client, tracker, filename, map, code);
+        }
+
+        public JobMeta getMeta()
+        {
+            return this.meta;
+        }
+
+        /*
+         *  Creates tasks according to size number of splits neededs
+         */
+        public void splitSplits(int numSplits)
+        {
+            int step = this.fileLines / numSplits;
+            int remainder = this.fileLines % numSplits;
+
+            this.tasks = new Task[numSplits]; 
+
+            for (int i = 0, index = 0; i < numSplits; i++, index += step + ((remainder > 0) ? 1 : 0), remainder--)
+            {
+                this.tasks[i] = new Task(index, index + step + ((remainder > 0) ? 1 : 0), i, this.id);
+            }
+        }
+
+        public Task[] getTaskBatch(int offset, int size)
+        {
+            Task[] task = new Task[size];
+            Array.Copy(this.tasks, offset, task, 0, size);
+
+            this.batchesCount += 1;
+            return task;
         }
 
         public void workerFinished() 
         {
-            this.workersDone -= 1;
+            this.batchesCount -= 1;
         }
 
         /*
@@ -39,10 +70,8 @@ namespace PADIMapNoReduce
 
         public bool isFinished() 
         {
-            lock(this){
-                return this.workersDone == 0; 
-            }
-       }
+                return this.batchesCount == 0; 
+        }
 
         public int Id 
         {
@@ -51,57 +80,51 @@ namespace PADIMapNoReduce
                 return this.id;
             }
         }
+
+        public override String ToString()
+        {
+            return "[JOB:" + id + "]<filename: " + this.meta.filename + "; map: " + this.meta.map + ";> ";
+        }
     }
 
 
     partial class WorkRemote
     {
-        private int done = 0;   //temporary used by join() to signal worker has no more work to do
         private IDictionary<int, Job> steve = new Dictionary<int, Job>();
-
-
-        public void submitJob(string map, string filename, int numSplits, int numberOfLines)
-        {
-            Console.WriteLine("Request for file: " + filename);
-
-            int jobId = new Random().Next();
-
-            int step = numberOfLines / numSplits;
-            int remainder = numberOfLines % numSplits;
-
-            Task[] tasks = new Task[numSplits]; 
-
-            for (int i = 0, index = 0; i < numSplits; i++, index += step + ((remainder > 0) ? 1 : 0), remainder--)
-            {
-                tasks[i] = new Task(index, index + step + ((remainder > 0) ? 1 : 0), i, jobId, map, this.url);
-            }
-
        
-           
-            IList<IWorker> workers = this.getWorkers();
-            int numWorkers = workers.Count;  //need to check if all slaves are alive
-            steve[jobId] = new Job(map, tasks, jobId, numWorkers);
-            int j = 0;
-            step = numSplits / numWorkers;
-            remainder = numSplits % numWorkers;
+        public void submitJob(int jobId, int numSplits)
+        {
+       
 
+            Job job = steve[jobId];
+            Console.WriteLine("Started Job: " + job.ToString() );
+
+            job.splitSplits(numSplits);
+
+            IList<IWorker> workers = this.getWorkers();
+         
+            int numWorkers = workers.Count;
+            int j = 0;
+            int step = numSplits / numWorkers;
+            int remainder = numSplits % numWorkers;
+            int size;
             foreach (IWorker worker in workers)
             {
-
-                Task[] task = new Task[step + ((remainder > 0) ? 1 : 0)];
-                Array.Copy(tasks, j, task, 0, step + ((remainder > 0) ? 1 : 0));
-         
-                j += step + ((remainder > 0) ? 1 : 0);
-                remainder--;
+                size = step + ((remainder > 0) ? 1 : 0);
 
                 try
                 {
-                    worker.startSplit(map, filename, task);
+                    worker.startSplit(job.getTaskBatch(j,size));
                 }
-                catch (SocketException) 
+                catch(SocketException)
                 {
-                    Console.WriteLine("A worker died");
+                    //I a worker died, replication must work
+                    Console.WriteLine("A worker died.");
                 }
+
+                j += size;
+                remainder--;
+          
             }
 
 
@@ -112,13 +135,19 @@ namespace PADIMapNoReduce
 
         }
 
-        /**
-         * Request for worker who is job tracker to propagate the code between the known workers 
+
+        /*
+         * Sends all information necessary for job execution, all workers will keep this information stored.
+         * returns jobId so that the client can send splits
          */
-        public void SendMapper(byte[] code, String className)
+        public int sendMeta(string clientAddr, string filename, int filesize, string map, byte[] code)
         {
+            Job j = new Job(clientAddr, this.url, filename,filesize, map, code);
+            this.steve[j.Id] = j;
             foreach (IWorker worker in this.getWorkers())
-                worker.createMapper(code, className);
+                worker.createMeta(j.getMeta());
+         
+            return j.Id;
         }
 
         /**

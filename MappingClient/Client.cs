@@ -15,6 +15,7 @@ namespace PADIMapNoReduce
     public class Client
     {
         public static IClient me;
+        public static string addr;
         public static string trackerUrl;
         public Client(int id)
         {
@@ -22,8 +23,8 @@ namespace PADIMapNoReduce
             TcpChannel channel = new TcpChannel(10000 + id);
             ChannelServices.RegisterChannel(channel, false);
             RemotingConfiguration.RegisterWellKnownServiceType(typeof(ClientRemote), "C", WellKnownObjectMode.Singleton);
-
-            Client.me = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + id).ToString() + "/C");
+            Client.addr = "tcp://localhost:" + (10000 + id).ToString() + "/C";
+            Client.me = (IClient)Activator.GetObject(typeof(IClient), Client.addr);
 
         }
 
@@ -68,17 +69,9 @@ namespace PADIMapNoReduce
     class ClientRemote : MarshalByRefObject, IClient
     {
 
-        private static String[] lines = null;
-        private IJobTracker tracker = null;
-        private string outputDir;
-
-        public static int setFile(string filename)
-        {
-            ClientRemote.lines = File.ReadAllLines(filename);
-            return ClientRemote.numberOfFileLines();
-        }
-
-
+        private IDictionary<string,string[]> files = new Dictionary<string,string[]>();
+        private IDictionary<string,string> outputs = new Dictionary<string,string>();
+ 
         /*
          *  The Client does not know which file the split belongs to 
          * 
@@ -87,28 +80,24 @@ namespace PADIMapNoReduce
          */
 
 
-        public String[] getSplit(int lower, int higher)
+        public String[] getSplit(string filename, int lower, int higher)
         {
-            if (lines == null) return null;
+            string[] lines = this.files[filename];
 
             int arraySize = higher > lines.Length ? lines.Length - lower : higher - lower;
             String[] splitFile = new String[arraySize];
 
             for (int i = lower, index = 0; i < higher && i < lines.Length; i++, index++)
             {
-                splitFile[index] = ClientRemote.lines[i];
+                splitFile[index] = lines[i];
             }
             return splitFile;
         }
 
-        private static int numberOfFileLines()
-        {
-            return (lines != null) ? lines.Length : 0;
-        }
 
-        public void storeSplit(ISet<KeyValuePair<String, String>> set, int splitID)
+        public void storeSplit(string filename, ISet<KeyValuePair<String, String>> set, int splitID)
         {
-
+            string outputDir = outputs[filename];
             if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
 
             using (StreamWriter file = new StreamWriter(outputDir + splitID.ToString() + ".out"))
@@ -121,19 +110,24 @@ namespace PADIMapNoReduce
         }
 
         /**
-         *  returns success of connecting to tracker
+         *  The process of starting a job has 2 phases
+         *  In the first phase the tracker gets all metadada and code to be used needed for job execution
+         *  In the second phase the job is submitted
+         *  
          */
 
         public bool newJob(string trackerUrl, string inputFilePath, string outputDir, int numOfSplits,string mapClass,string mapDll)
         {
-            this.tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), trackerUrl);
+            IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), trackerUrl);
             try
             {
-                this.outputDir = outputDir;
-                
-                this.tracker.SendMapper(File.ReadAllBytes(mapDll), mapClass);
-                int numLines = ClientRemote.setFile(inputFilePath);
-                this.tracker.submitJob(mapClass, inputFilePath, numOfSplits, numLines);
+                this.openFile(inputFilePath);
+                int id = tracker.sendMeta(Client.addr, inputFilePath, this.fileLinesCount(inputFilePath), mapClass,File.ReadAllBytes(mapDll));
+                this.outputs[inputFilePath] = outputDir;
+
+                tracker.submitJob(id, numOfSplits);
+                this.closeFile(inputFilePath);
+
                 return true;
             }
             catch (SocketException)
@@ -142,7 +136,18 @@ namespace PADIMapNoReduce
             }
 
         }
+        public void openFile(string filename) 
+        {
+            this.files.Add(filename, File.ReadAllLines(filename));
+        }
+        public int fileLinesCount(string filename)
+        {
+            return this.files[filename].Length;
+        }
 
-
+        public void closeFile(string filename)
+        {
+            this.files.Remove(filename);
+        }
     }
 }
