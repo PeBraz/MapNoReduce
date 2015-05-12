@@ -282,7 +282,7 @@ namespace API {
         {
             string pmId = this.tb_id.Text;
 
-            if (pmId == null) 
+            if (pmId == null || pmId.Trim().Length == 0) 
             {
                 MessageBox.Show("No id given");
                 return;

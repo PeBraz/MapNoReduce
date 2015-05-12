@@ -123,7 +123,6 @@ namespace PADIMapNoReduce
 
         private Object delayLock = new Object();
         private Object freezeLock = new Object();
-        private bool frozen = false;
         private int id;
         private string url;
         private Queue<Task> queue = new Queue<Task>();
@@ -131,11 +130,15 @@ namespace PADIMapNoReduce
         private IDictionary<string, Map> myMaps = new Dictionary<string,Map>();
         private IDictionary<int, JobMeta> metas = new Dictionary<int, JobMeta>();
 
+        private ManualResetEvent workerMre = new ManualResetEvent(true);
+
+        private Task? runningTask = null;
+
         public WorkRemote()
         {
             this.id = Worker.getId();
             this.url = Worker.getUrl();
-            Console.WriteLine("Initializing: " + Worker.getBootstrapIp());
+            Console.WriteLine( Worker.getBootstrapIp() != null ? "Connecting to: " + Worker.getBootstrapIp() : "<New network Created>");
             this.setStatus(STATUS_IDLE);
 
             new Thread(() => mainThread()).Start();
@@ -159,7 +162,8 @@ namespace PADIMapNoReduce
 
                     Task? task = this.getTask();
                     if (task == null) break;
-                    this.setStatus(STATUS_WORK);
+                    this.statusWorking(task.Value);
+
 
                     JobMeta meta = metas[task.Value.jobId];
                     client = ((IClient)Activator.GetObject(typeof(IClient), meta.clientAddr));
@@ -173,15 +177,8 @@ namespace PADIMapNoReduce
                         taskOutputs.AddRange(map.map(s));
                     }
 
-/*  
-                    lock (delayLock) { };
+                    workerMre.WaitOne();
 
-                    while (frozen)
-                    {
-                        Thread.Sleep(100);
-                    }
-
-                    */
                     Console.WriteLine("Did: " + task.Value.id + "; Tracker: " + task.Value.trackerUrl);
                     client.storeSplit(meta.filename, taskOutputs, task.Value.id);
                     taskOutputs.Clear();
@@ -196,7 +193,7 @@ namespace PADIMapNoReduce
                     }
 
                 } 
-                this.setStatus(STATUS_IDLE);
+                this.statusIdle();
                 Thread.Sleep(100);  //sleep while no jobs in queue
 
             }
@@ -256,10 +253,26 @@ namespace PADIMapNoReduce
             }
             return null;
         }
-
-        public void setStatus(string status) 
+        public void statusWorking()
         {
-            this.status = status;
+            this.status = STATUS_WORK;
+        }
+
+        public void statusWorking(Task? task)
+        {
+            this.runningTask = task;
+            this.status = STATUS_WORK;
+        }
+
+        public void statusFrozen() 
+        {
+            this.status = STATUS_BLOCKED;
+        }
+
+        public void statusIdle() 
+        {
+            this.runningTask = null;
+            this.status = STATUS_IDLE;
         }
 
         public void printStatus()
@@ -269,25 +282,23 @@ namespace PADIMapNoReduce
 
         public void delay(int seconds)
         {
-
-            lock (delayLock) {
-                this.setStatus(STATUS_BLOCKED);
-                Thread.Sleep(seconds * 1000); 
-            }
-            this.setStatus(STATUS_WORK);
+            workerMre.Reset();
+            Thread.Sleep(seconds * 1000); 
+            workerMre.Set();
+            this.statusWorking();
         }
 
 
-        public void freeze() 
+        public void freezeWorker() 
         {
-            frozen = true;
-            this.setStatus(STATUS_BLOCKED);
+            workerMre.Reset();
+            this.statusFrozen();
         }
 
-        public void unfreeze() 
+        public void unfreezeWorker() 
         {
-            frozen = false;
-            this.setStatus(STATUS_WORK);
+            workerMre.Set();
+            this.statusWorking();
         }
 
 

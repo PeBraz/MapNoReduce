@@ -78,18 +78,22 @@ namespace PADIMapNoReduce
 
             //calculate the starting point for this tracker
             //(how many splits the others will do)
-            int index = 0;
+           /* int index = 0;
             for (int i = 1; i < this.trackerId ; i++) 
             {
-                index += numSplits / this.trackerCount + (numSplits % this.trackerCount >= i ? 1 : 0);
-            }
+                index += numSplits / this.trackerCount + (numSplits % this.trackerCount >= i ? 1 : 0);  (this.trackerId - 1);
+            }*/
+
+            int index = this.getTrackerStartingLine(this.trackerId, this.fileLines, this.trackerCount);  
             //calculates how many splits needed for this tracker
             numSplits = numSplits / this.trackerCount + (numSplits % this.trackerCount >= trackerId ? 1 : 0);
+            //Calculates how many lines needed for each step
+            int filelines = this.fileLines / numSplits;
 
-            
             //create all tasks
-            int step = this.fileLines / numSplits;
-            int remainder = this.fileLines % numSplits;
+            int step = filelines/ numWorkers;
+            Console.WriteLine(step + "and" + numSplits);
+            int remainder = numSplits % numWorkers;
 
             this.tasks = new Task[numSplits];
 
@@ -185,8 +189,13 @@ namespace PADIMapNoReduce
         {
             return 1 + (numSplits / numTrackers) * (trackerId - 1) + (trackerId <= (numSplits % numTrackers) ? trackerId - 1 : (numSplits % numTrackers));
         }
-
-
+        /*
+         *  Gets the initial line number for the tracker (the tracker starts splitting from this line)
+         */
+        public int getTrackerStartingLine(int trackerId, int numlines, int numTrackers)
+        {
+             return 1 + (numlines/numTrackers)* (trackerId - 1) + ( trackerId <= (numlines%numTrackers) ? trackerId - 1 : (numlines%numTrackers)); 
+        }
         public override String ToString()
         {
             return "[JOB:" + id + "]<filename: " + this.meta.filename + "; map: " + this.meta.map + ";> ";
@@ -199,6 +208,8 @@ namespace PADIMapNoReduce
         private IDictionary<int, Job> steve = new Dictionary<int, Job>();
 
         private IList<IJobTracker> auxTrackers;
+
+        private ManualResetEvent trackerMre = new ManualResetEvent(true);
 
         public void submitJob(int jobId, int numSplits)
         {
@@ -238,7 +249,8 @@ namespace PADIMapNoReduce
             }
             while (!steve[jobId].isFinished())
             {
-               Thread.Sleep(1000);
+                trackerMre.WaitOne();
+                Thread.Sleep(1000);
             }
 
             if (!job.amMaster())
@@ -356,6 +368,15 @@ namespace PADIMapNoReduce
         private bool amMaster()
         {
             return Worker.amMaster;
+        }
+
+        public void freezeTracker() 
+        {
+            trackerMre.Reset();
+        }
+        public void unfreezeTracker()
+        {
+            trackerMre.Set();
         }
 
     }

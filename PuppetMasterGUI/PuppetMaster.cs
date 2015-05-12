@@ -31,6 +31,10 @@ namespace PADIMapNoReduce
 
         void unfreezew(int id);
 
+        void freezec(int id);
+
+        void unfreezec(int id);
+
         void checkMachines();
     }
 
@@ -102,11 +106,11 @@ namespace PADIMapNoReduce
             }
             else if (cmd.Equals("freezec"))
             {
-                //freezec(int.Parse(words[1]));
+                this.me.freezec(int.Parse(words[1]));
             }
             else if (cmd.Equals("unfreezec"))
             {
-                //unfreezec(int.Parse(words[1]));
+                this.me.unfreezec(int.Parse(words[1]));
             }
             else
             {
@@ -157,13 +161,13 @@ namespace PADIMapNoReduce
         {
             int id = 1;
 
-            if (this.client == null)
-            {
-                PuppetMaster.initClientProcess();
-                this.client = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + id).ToString() + "/C");
-            }
+
+            PuppetMaster.initClientProcess();
+            this.client = (IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:" + (10000 + id).ToString() + "/C");
             //this call is blocking, call it in a thread to call other commands
+
             new Thread(() => client.newJob(targetWorker, inputFilePath, outputDir, numOfSplits, mapClass, mapDll)).Start();
+
 
         }
 
@@ -184,7 +188,7 @@ namespace PADIMapNoReduce
         public void freezew(int id) {
             IWorker w = getWorker(id);
             if (w != null)
-               new Thread(()=> w.freeze()).Start();
+               new Thread(()=> w.freezeWorker()).Start();
             else
                 Console.WriteLine("Worker not found");
         }
@@ -192,9 +196,29 @@ namespace PADIMapNoReduce
         {
             IWorker w = getWorker(id);
             if (w != null)
-                new Thread(()=>w.unfreeze()).Start();
+                new Thread(()=>w.unfreezeWorker()).Start();
             else
                 Console.WriteLine("Worker not found");
+        }
+
+
+        public void freezec(int id)
+        {
+            IJobTracker t = (IJobTracker)getWorker(id);
+            if (t != null)
+                new Thread(() => t.freezeTracker()).Start();
+            else
+                Console.WriteLine("Treacker not found");
+
+        }
+
+        public void unfreezec(int id)
+        {
+            IJobTracker t = (IJobTracker)getWorker(id);
+            if (t != null)
+                new Thread(() => t.unfreezeTracker()).Start();
+            else
+                Console.WriteLine("Tracker not found");
         }
 
         private IWorker getWorker(int id) 
@@ -205,6 +229,8 @@ namespace PADIMapNoReduce
             }
             return null;
         }
+
+
         /** 
          * Checks who is working and makes the tracker and workers print their status
          */

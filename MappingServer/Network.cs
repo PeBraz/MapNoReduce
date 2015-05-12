@@ -135,8 +135,11 @@ namespace PADIMapNoReduce
         public void addNode(int id, string ip) 
         {
             Console.WriteLine("Worker Joined: " + id);
-            this.peers.Add(id,ip);
-            this.network.Add(id, (INetwork)Activator.GetObject(typeof(WorkRemote), ip));
+            lock (this.network)
+            {
+                this.peers.Add(id, ip);
+                this.network.Add(id, (INetwork)Activator.GetObject(typeof(WorkRemote), ip));
+            }
         }
         public void removeNode(int id) 
         {
@@ -156,16 +159,20 @@ namespace PADIMapNoReduce
 
                 IList<int> downSlaves = new List<int>();
 
-                foreach (int key in this.network.Keys)
+                //race with addNode(..)
+                lock (this.network)
                 {
-                    try
+                    foreach (int key in this.network.Keys)
                     {
-                        network[key].heartbeat();
-          
-                    }
-                    catch (SocketException)
-                    {
-                        downSlaves.Add(key);
+                        try
+                        {
+                            network[key].heartbeat();
+
+                        }
+                        catch (SocketException)
+                        {
+                            downSlaves.Add(key);
+                        }
                     }
                 }
                 foreach (int worker in downSlaves)

@@ -22,6 +22,9 @@ namespace PADIMapNoReduce
         string finishWorker(int jobId);
         void beAuxiliar(string masterUrl, int jobId, int filelines, int trackerId, int trackerFactor);
         void finishTracker(int jobId);
+
+        void freezeTracker();
+        void unfreezeTracker();
     }
 
 
@@ -39,12 +42,11 @@ namespace PADIMapNoReduce
 
        void startSplit(Task[] batch);
        void createMeta(JobMeta meta);
-       // after the job is done the mapper used can be deleted
-       void freeMapper(String className);
+
        void printStatus();
-       //void addDelay(int seconds);
-       void freeze();
-       void unfreeze();
+
+       void freezeWorker();
+       void unfreezeWorker();
        void delay(int seconds);
     }
     [Serializable]
