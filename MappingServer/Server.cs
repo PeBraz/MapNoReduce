@@ -139,7 +139,7 @@ namespace PADIMapNoReduce
             this.id = Worker.getId();
             this.url = Worker.getUrl();
             Console.WriteLine( Worker.getBootstrapIp() != null ? "Connecting to: " + Worker.getBootstrapIp() : "<New network Created>");
-            this.setStatus(STATUS_IDLE);
+            this.statusIdle();
 
             new Thread(() => mainThread()).Start();
         }

@@ -92,7 +92,7 @@ namespace PADIMapNoReduce
 
             //create all tasks
             int step = filelines/ numWorkers;
-            Console.WriteLine(step + "and" + numSplits);
+
             int remainder = numSplits % numWorkers;
 
             this.tasks = new Task[numSplits];
