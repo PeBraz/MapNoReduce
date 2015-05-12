@@ -145,6 +145,7 @@ namespace PADIMapNoReduce
 
         private IList<KeyValuePair<int, IWorker>> workers = new List<KeyValuePair<int, IWorker>>();
         private IClient client = null;
+
         public void startWorker(int workerId, string url, string targetWorker)
         {
 

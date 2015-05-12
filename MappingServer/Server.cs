@@ -98,16 +98,15 @@ namespace PADIMapNoReduce
             this.type = type;
         }
 
-        public ISet<KeyValuePair<String, String>> map(string fileLine) {
+        public IList<KeyValuePair<String, String>> map(string fileLine) {
             object[] args = new object[] { fileLine };
-            return (ISet<KeyValuePair<String, String>>)
+            return (IList<KeyValuePair<String, String>>)
                     this.type.InvokeMember(methodName, BindingFlags.Default | BindingFlags.InvokeMethod, null, this.classObj, args);
         }
     }
 
     partial class WorkRemote : MarshalByRefObject, IWorker, IJobTracker, INetwork
     {
-        private IClient client;
         //private IList<KeyValuePair<String, String>> map;
        
 
@@ -117,8 +116,9 @@ namespace PADIMapNoReduce
 
         //Counter to know how many tasks have been completed by this worker for each job,
         // (stolen tasks are not counted)
-        private IDictionary<int, int> taskCounter = new Dictionary<int, int>();
-
+        //private IDictionary<int, int> taskCounter = new Dictionary<int, int>();
+        //first key: jobId, secondKey: trackerUrl
+        private IDictionary<int, IDictionary<string, int>> taskCounter = new Dictionary<int, IDictionary<string, int>>();
         public string status;
 
         private Object delayLock = new Object();
@@ -136,7 +136,6 @@ namespace PADIMapNoReduce
             this.id = Worker.getId();
             this.url = Worker.getUrl();
             Console.WriteLine("Initializing: " + Worker.getBootstrapIp());
-            client = ((IClient)Activator.GetObject(typeof(IClient), "tcp://localhost:10001/C"));
             this.setStatus(STATUS_IDLE);
 
             new Thread(() => mainThread()).Start();
@@ -146,7 +145,7 @@ namespace PADIMapNoReduce
 
         public void mainThread() 
         {
-            ISet<KeyValuePair<String, String>> taskOutputs = new HashSet<KeyValuePair<String, String>>();
+            List<KeyValuePair<String, String>> taskOutputs = new List<KeyValuePair<String, String>>();
             IClient client = null;
  
 
@@ -155,6 +154,8 @@ namespace PADIMapNoReduce
 
                 while (true)
                 {
+
+          
 
                     Task? task = this.getTask();
                     if (task == null) break;
@@ -166,13 +167,13 @@ namespace PADIMapNoReduce
                     String[] splits = client.getSplit(meta.filename, task.Value.lower, task.Value.higher);
                     if (splits == null) break;
 
-
                     Map map = myMaps[meta.map];
                     foreach (String s in splits)
                     {
-                        taskOutputs.UnionWith(map.map(s));
+                        taskOutputs.AddRange(map.map(s));
                     }
 
+/*  
                     lock (delayLock) { };
 
                     while (frozen)
@@ -180,19 +181,20 @@ namespace PADIMapNoReduce
                         Thread.Sleep(100);
                     }
 
-
-                    Console.WriteLine("Did: " + task.Value.id);
+                    */
+                    Console.WriteLine("Did: " + task.Value.id + "; Tracker: " + task.Value.trackerUrl);
                     client.storeSplit(meta.filename, taskOutputs, task.Value.id);
                     taskOutputs.Clear();
 
 
                     //This supposes that no tasks were stolen from the worker
                     //If a task is stolen then the counter must go down
-                    if (--taskCounter[task.Value.jobId] <= 0)
+                    if (--taskCounter[task.Value.jobId][task.Value.trackerUrl] <= 0)
                     {
-                        IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(WorkRemote), meta.trackerAddr);
-                        new Thread(() => tracker.finish(task.Value.jobId)).Start();
+                        IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(WorkRemote), task.Value.trackerUrl);
+                        new Thread(() => tracker.finishWorker(task.Value.jobId)).Start();
                     }
+
                 } 
                 this.setStatus(STATUS_IDLE);
                 Thread.Sleep(100);  //sleep while no jobs in queue
@@ -220,8 +222,23 @@ namespace PADIMapNoReduce
 
         private void storeTasks(Task[] tasks) 
         {
-            this.taskCounter[tasks[0].jobId] = tasks.Length;
+            lock (this.taskCounter)
+            {
+                if (!this.taskCounter.ContainsKey(tasks[0].jobId))
+                {
+                    this.taskCounter.Add(tasks[0].jobId, new Dictionary<string, int>());
+                }
+            }
 
+            lock(this.taskCounter[tasks[0].jobId]) 
+            {
+                if (!this.taskCounter[tasks[0].jobId].ContainsKey(tasks[0].trackerUrl))
+                {
+                    this.taskCounter[tasks[0].jobId].Add(tasks[0].trackerUrl, 0);
+                }          
+            }
+
+            this.taskCounter[tasks[0].jobId][tasks[0].trackerUrl] += tasks.Length;
             lock(this.queue){
                 foreach(Task task in tasks)
                 {

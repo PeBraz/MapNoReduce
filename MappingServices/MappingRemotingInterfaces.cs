@@ -6,21 +6,22 @@ namespace PADIMapNoReduce
 {
 
     public interface IMapper {
-        ISet<KeyValuePair<String, String>> Map(String fileLine);
+        IList<KeyValuePair<String, String>> Map(String fileLine);
     }
 
     public interface IClient 
     {
         string[] getSplit(string filename, int lower, int higher);
-        void storeSplit(string filename, ISet<KeyValuePair<String, String>> set, int id);
+        void storeSplit(string filename, IList<KeyValuePair<String, String>> set, int id);
         bool newJob(string trackerUrl, string inputFilePath, string outputDir, int numOfSplits, string mapClass, string mapDll);
     }
     public interface IJobTracker
-    { 
+    {
+        int sendMeta(string clientAddr, string filename, int filelines, string map, byte[] code);
         void submitJob(int jobId, int numSplits);
-        string finish(int jobId);
-        int sendMeta(string clientAddr, string filename, int filesize, string map, byte[] code);
-       
+        string finishWorker(int jobId);
+        void beAuxiliar(string masterUrl, int jobId, int filelines, int trackerId, int trackerFactor);
+        void finishTracker(int jobId);
     }
 
 
@@ -53,13 +54,15 @@ namespace PADIMapNoReduce
         public int higher;
         public int id;
         public int jobId;
+        public string trackerUrl;   //who serves the task
 
-        public Task(int lower, int higher, int id, int jobId)
+        public Task(int lower, int higher, int id, int jobId, string trackerUrl)
         {
             this.lower = lower;
             this.id = id;
             this.higher = higher;
             this.jobId = jobId;
+            this.trackerUrl = trackerUrl;
         }
             
 
@@ -70,16 +73,14 @@ namespace PADIMapNoReduce
     {
         public int jobId;
         public string clientAddr;
-        public string trackerAddr;
         public string filename;
         public string map;
         public byte[] code;
 
-        public JobMeta (int jobId, string clientAddr, string trackerAddr, string filename, string map, byte[] code)
+        public JobMeta (int jobId, string clientAddr,  string filename, string map, byte[] code)
         {
             this.jobId = jobId;
             this.clientAddr = clientAddr;
-            this.trackerAddr = trackerAddr;
             this.filename = filename;
             this.map = map;
             this.code = code;

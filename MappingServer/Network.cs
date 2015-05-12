@@ -99,6 +99,37 @@ namespace PADIMapNoReduce
             return workers;
         }
 
+        private IList<INetwork> getNodes()
+        {
+            return this.network.Values.ToList<INetwork>();
+        }
+
+
+       /**
+        * Returns a specific amount of random workers from the network
+        * 
+        */
+        private IList<IJobTracker> getRandomNodes(int numOfWorkers) 
+        {
+
+
+            IList<IJobTracker> randWorkers = new List<IJobTracker>();
+            IList<IJobTracker> workers = this.getNodes().Cast<IJobTracker>().ToList();
+            IJobTracker worker = null;
+
+            while (numOfWorkers > 0 ) {
+                if (workers.Count == randWorkers.Count) break;  //if the number of workers specified is bigger than the number of workers available, exit the loop  
+
+                worker = workers[(int)new Random().Next(workers.Count)];
+                if (randWorkers.Contains(worker)) continue;
+
+                randWorkers.Add(worker);
+                numOfWorkers--;
+  
+            }
+
+            return randWorkers;
+        }
 
 
         public void addNode(int id, string ip) 
