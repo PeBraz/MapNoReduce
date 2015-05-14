@@ -9,9 +9,9 @@ namespace Mapper
 {
     public class Mapper : IMapper 
     {
-        public ISet<KeyValuePair<string, string>> Map(string fileLine)
+        public IList<KeyValuePair<string, string>> Map(string fileLine)
         {
-            ISet<KeyValuePair<string, string>> result = new HashSet<KeyValuePair<string, string>>();
+            IList<KeyValuePair<string, string>> result = new List<KeyValuePair<string, string>>();
             result.Add(new KeyValuePair<string, string>("Key", fileLine));
             return result;
         }

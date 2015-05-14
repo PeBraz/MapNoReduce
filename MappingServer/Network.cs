@@ -99,13 +99,47 @@ namespace PADIMapNoReduce
             return workers;
         }
 
+        private IList<INetwork> getNodes()
+        {
+            return this.network.Values.ToList<INetwork>();
+        }
+
+
+       /**
+        * Returns a specific amount of random workers from the network
+        * 
+        */
+        private IList<IJobTracker> getRandomNodes(int numOfWorkers) 
+        {
+
+
+            IList<IJobTracker> randWorkers = new List<IJobTracker>();
+            IList<IJobTracker> workers = this.getNodes().Cast<IJobTracker>().ToList();
+            IJobTracker worker = null;
+
+            while (numOfWorkers > 0 ) {
+                if (workers.Count == randWorkers.Count) break;  //if the number of workers specified is bigger than the number of workers available, exit the loop  
+
+                worker = workers[(int)new Random().Next(workers.Count)];
+                if (randWorkers.Contains(worker)) continue;
+
+                randWorkers.Add(worker);
+                numOfWorkers--;
+  
+            }
+
+            return randWorkers;
+        }
 
 
         public void addNode(int id, string ip) 
         {
             Console.WriteLine("Worker Joined: " + id);
-            this.peers.Add(id,ip);
-            this.network.Add(id, (INetwork)Activator.GetObject(typeof(WorkRemote), ip));
+            lock (this.network)
+            {
+                this.peers.Add(id, ip);
+                this.network.Add(id, (INetwork)Activator.GetObject(typeof(WorkRemote), ip));
+            }
         }
         public void removeNode(int id) 
         {
@@ -125,16 +159,20 @@ namespace PADIMapNoReduce
 
                 IList<int> downSlaves = new List<int>();
 
-                foreach (int key in this.network.Keys)
+                //race with addNode(..)
+                lock (this.network)
                 {
-                    try
+                    foreach (int key in this.network.Keys)
                     {
-                        network[key].heartbeat();
-          
-                    }
-                    catch (SocketException)
-                    {
-                        downSlaves.Add(key);
+                        try
+                        {
+                            network[key].heartbeat();
+
+                        }
+                        catch (SocketException)
+                        {
+                            downSlaves.Add(key);
+                        }
                     }
                 }
                 foreach (int worker in downSlaves)

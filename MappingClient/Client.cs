@@ -50,9 +50,9 @@ namespace PADIMapNoReduce
                     Console.WriteLine("Choose a worker port to start a test job [ex: 30001]: ");
 
                     Client.me.newJob("tcp://localhost:" + Console.ReadLine().Trim() + "/W",
-                                    "../log.txt",
+                                    @"..\log.txt",
                                     "Outputs/",
-                                    20,
+                                    100,
                                     "Mapper",
                                     "Mapper.dll");
 
@@ -84,6 +84,7 @@ namespace PADIMapNoReduce
         {
             string[] lines = this.files[filename];
 
+            //Console.WriteLine("lower: " + lower + "; higher: " + higher + "; lines.length: " + lines.Length);
             int arraySize = higher > lines.Length ? lines.Length - lower : higher - lower;
             String[] splitFile = new String[arraySize];
 
@@ -95,7 +96,7 @@ namespace PADIMapNoReduce
         }
 
 
-        public void storeSplit(string filename, ISet<KeyValuePair<String, String>> set, int splitID)
+        public void storeSplit(string filename, IList<KeyValuePair<String, String>> set, int splitID)
         {
             string outputDir = outputs[filename];
             if (!Directory.Exists(outputDir)) Directory.CreateDirectory(outputDir);
