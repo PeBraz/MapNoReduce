@@ -30,11 +30,14 @@ namespace API {
         private Label label1;
 
         private Button bt_id;
+        private Button button1;
 
         private  PuppetMaster me = null;
         public FormPuppetMaster() {
             InitializeComponent();
         }
+
+        private int line = 0;
 
         /// Clean up any resources being used.
         protected override void Dispose(bool disposing) {
@@ -63,6 +66,7 @@ namespace API {
             this.lb_id = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.bt_id = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // tb_Conversation
@@ -203,11 +207,22 @@ namespace API {
             this.bt_id.UseVisualStyleBackColor = false;
             this.bt_id.Click += new System.EventHandler(this.bt_id_click);
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(441, 319);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 15;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // FormPuppetMaster
             // 
             this.AutoScaleBaseSize = new System.Drawing.Size(5, 13);
             this.BackColor = System.Drawing.SystemColors.GrayText;
             this.ClientSize = new System.Drawing.Size(581, 368);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.bt_id);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.tb_id);
@@ -244,7 +259,10 @@ namespace API {
                return;
             }
             this.me.readFile(this.tb_InputPath.Text);            
-        }  
+        }
+
+     
+
 
         public void AddMsg(string s) { this.tb_Conversation.AppendText("\r\n" + s); } // Adiciona uma
         
@@ -289,6 +307,16 @@ namespace API {
             }
             if (this.me == null)
                 this.me = new PuppetMaster(int.Parse(pmId));  //local instance
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (this.me == null)
+            {
+                MessageBox.Show("Create a puppet Master first");
+                return;
+            }
+            this.me.readLine(this.tb_InputPath.Text);
         }
 
     }

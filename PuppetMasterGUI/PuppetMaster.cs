@@ -42,6 +42,8 @@ namespace PADIMapNoReduce
     {
         private IPuppetMaster me;
 
+        private int lineNum = 0;
+
         public PuppetMaster(int id)
         {
 
@@ -54,6 +56,15 @@ namespace PADIMapNoReduce
            
         }
 
+        public void readLine(string filename) { 
+        
+            String[] lines = File.ReadAllLines(filename);
+
+            parse(lines[lineNum++]);
+
+            if (this.lineNum == lines.Length) lineNum = 0;
+        }
+
         public void readFile(string filename)
         {
             String[] lines = File.ReadAllLines(filename);
@@ -62,6 +73,7 @@ namespace PADIMapNoReduce
             {
                 parse(line);
             }
+          
         }
 
 
