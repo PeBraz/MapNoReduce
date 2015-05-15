@@ -13,34 +13,7 @@ The term MapReduce actually refers to two separate and distinct tasks.
 
 
 PADIMapNoReduce is a simplified implementation of the MapReduce middleware and programming model, concerning only about the mapping part.
-The computation in our implementation takes the input key/value pairs from input files, where the keys are the numbers of the line of the file being read and the values are the content
 
+The Map invocations are distributed across multiple machines by automatically partitioning the input data into a set of splits of size S. The input splits can be processed in parallel by different machines(workers), ensuring that for each job submitted, all the input data is processed.
 
-
-
-
-%The goal of this project is to design and implement PADIMapNoReduce, a simplified
-%implementation of the MapReduce middleware and programming model. MapReduce was
-%introduced by Google in 2004 [1] and is currently one of the most popular %approaches for
-%large scale data analytics - also thanks to the availability of high quality open-source implementations
-
-
-%When using the MapReduce paradigm, the computation takes a set of input key/value
-%pairs, and produces a set of output key/value pairs.
-%The Map function (different for each application), is written by the user and takes an input set of key/value pairs and produces a set of key/value pairs.
-
-
- In the case of PADIMapNoReduce, the input key/value pairs are extracted from input files. The keys are the numbers of the line of the file being read and the values are the content of those lines.
-%The Map invocations are distributed across multiple machines by automatically partitioning the input data into a set of splits of size S. The input splits can be processed in parallel by different machines, named workers. The system should ensure that for each job submitted, all the input data is processed. Furthermore, the system should strive to ensure good performance my monitoring a job’s progress, detecting faulty or slow machines and rescheduling their tasks on idle machines.
-%In the original MapReduce implementation there is a centralised component, called the job tracker, that is in charge of supervising the progress of the job. 
-
-
-
-
-
-%Este artigo tem como objectivo apresentar e descrever a solu¸c˜ao adoptada para a implementa¸c˜ao do projecto da disciplina
-%de PADI (Plataformas para Aplica¸c˜oes Distribu´ıdas na Internet), denominado PADI@HOME [2].
-%O PADI@HOME ´e um sistema que permite realizar compila¸c˜oes distribu´ıdas (comando make), armazenando um conjunto
-%de ficheiros de entrada e o resultado das suas compila¸c˜oes.
-%Para al´em de ser tolerante a faltas, este sistema tem de ser escal´avel a todos os n´ıveis (Clientes, Servidores de
-%Nomes, Coordenadores e Volunt´arios).
+We present an implementation which makes workers take the functionalities of the job tracker, meaning the worker may behave differently depending on the situation.
