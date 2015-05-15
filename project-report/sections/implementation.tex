@@ -1,6 +1,6 @@
 \section {Implementation}
 
-
+The computation in our implementation takes the input key/value pairs from input files, where the keys are the numbers of the line of the file being read and the values are the content
 
 \subsection {Execution Overview}
 
@@ -94,50 +94,3 @@ tasks are completed. The information is pushed incrementally
 to workers that have in-progress reduce tasks.
 
 
-\subsection{Fault Tolerance}
-Since the MapReduce library is designed to help process
-very large amounts of data using hundreds or thousands
-of machines, the library must tolerate machine failures
-gracefully.
-
-\vspace*{8pt}%
-\textbf{Worker Failure}
-\vspace*{8pt}%
-
-
-The master pings every worker periodically. If no response is received from a worker in a certain amount of time, the master marks the worker as failed. Any map tasks completed by the worker are reset back to their initial
-idle state, and therefore become eligible for scheduling
-on other workers. Similarly, any map task or reduce
-task in progress on a failed worker is also reset to idle
-and becomes eligible for rescheduling.
-Completed map tasks are re-executed on a failure because
-their output is stored on the local disk(s) of the
-failed machine and is therefore inaccessible. Completed
-reduce tasks do not need to be re-executed since their
-output is stored in a global file system.
-When a map task is executed first by worker A and
-then later executed by worker B (because A failed), all
-workers executing reduce tasks are notified of the reexecution.
-Any reduce task that has not already read the
-data from worker A will read the data from worker B.
-MapReduce is resilient to large-scale worker failures.
-For example, during one MapReduce operation, network
-maintenance on a running cluster was causing groups of
-80 machines at a time to become unreachable for several
-minutes. The MapReduce mastersimply re-executed
-the work done by the unreachable worker machines, and
-continued to make forward progress, eventually completing
-the MapReduce operation.
-
-\vspace*{8pt}%
-\textbf{Master Failure}%
-\vspace*{8pt}%
-
-It is easy to make the master write periodic checkpoints
-of the master data structures described above. If the master
-task dies, a new copy can be started from the last
-checkpointed state. However, given that there is only a
-single master, its failure is unlikely; therefore our current
-implementation aborts the MapReduce computation
-if the master fails. Clients can check for this condition
-and retry the MapReduce operation if they desire.
