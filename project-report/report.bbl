@@ -1,13 +1,9 @@
 \begin{thebibliography}{1}\setlength{\itemsep}{-1ex}\small
 
 \bibitem{ex1}
-I.~M. Author.
-\newblock Some related article {I} wrote.
-\newblock {\em Some Fine Journal}, 99(7):1--100, January 1999.
-
-\bibitem{ex2}
-A.~N. Expert.
-\newblock {\em A Book He Wrote}.
-\newblock His Publisher, Erewhon, NC, 1999.
+J.~Dean and S.~Ghemawat.
+\newblock Mapreduce: Simplified data processing on large clusters.
+\newblock {\em OSDI'04: Sixth Symposium on Operating System Design and
+  Implementation}, December 2004.
 
 \end{thebibliography}
