@@ -51,9 +51,9 @@ namespace PADIMapNoReduce
 
                     Client.me.newJob("tcp://localhost:" + Console.ReadLine().Trim() + "/W",
                                     @"..\log.txt",
-                                    "Outputs/",
+                                    "Outputs",
                                     100,
-                                    "Mapper",
+                                    "ParadiseCountMapper",
                                     "Mapper.dll");
 
                 }
@@ -122,13 +122,15 @@ namespace PADIMapNoReduce
             IJobTracker tracker = (IJobTracker)Activator.GetObject(typeof(IJobTracker), trackerUrl);
             try
             {
+                if (!outputDir.EndsWith("\\")) outputDir += "\\";
+
                 this.openFile(inputFilePath);
                 int id = tracker.sendMeta(Client.addr, inputFilePath, this.fileLinesCount(inputFilePath), mapClass,File.ReadAllBytes(mapDll));
                 this.outputs[inputFilePath] = outputDir;
 
                 tracker.submitJob(id, numOfSplits);
                 this.closeFile(inputFilePath);
-
+                Console.WriteLine("<Job ended>");
                 return true;
             }
             catch (SocketException)
